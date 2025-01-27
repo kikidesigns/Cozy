@@ -15,16 +15,34 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
+        headerShown: true,
         tabBarButton: HapticTab,
         tabBarBackground: TabBarBackground,
-        tabBarStyle: Platform.select({
-          ios: {
-            position: 'absolute',
-          },
-          default: {},
-        }),
+        headerStyle: {
+          backgroundColor: Colors[colorScheme ?? 'light'].tint,
+        },
+        headerTintColor: '#fff',
+        tabBarStyle: {
+          ...Platform.select({
+            ios: {
+              backgroundColor: Colors[colorScheme ?? 'light'].background,
+              borderTopColor: Colors[colorScheme ?? 'light'].tint,
+              borderTopWidth: 1,
+            },
+            default: {
+              backgroundColor: Colors[colorScheme ?? 'light'].background,
+              borderTopColor: Colors[colorScheme ?? 'light'].tint,
+              borderTopWidth: 1,
+            },
+          }),
+        },
       }}>
+      <Tabs.Screen
+        name="index"
+        options={{
+          href: null,
+        }}
+      />
       <Tabs.Screen
         name="welcome"
         options={{
