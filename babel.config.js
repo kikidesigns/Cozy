@@ -6,13 +6,19 @@ module.exports = function (api) {
       [
         'module-resolver',
         {
-          root: ['.'],
+          root: ['./'],
+          extensions: ['.ios.js', '.android.js', '.js', '.ts', '.tsx', '.json'],
           alias: {
-            '@': '.',
+            '@': './',
+            '@components': './components',
+            '@constants': './constants',
+            '@hooks': './hooks',
+            '@assets': './assets',
           },
         },
       ],
       'expo-router/babel',
+      'react-native-reanimated/plugin',
     ],
   };
 };
