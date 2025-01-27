@@ -43,18 +43,14 @@ function Scene() {
   );
 }
 
-function CameraController() {
+function CameraRig({ panResponder }) {
   const { camera } = useThree();
   const targetRotation = useRef({ x: 0, y: 0 });
   const currentRotation = useRef({ x: 0, y: 0 });
-  const [isDragging, setIsDragging] = useState(false);
   
-  // Spring back animation
   useFrame(() => {
-    if (!isDragging) {
-      currentRotation.current.x += (targetRotation.current.x - currentRotation.current.x) * 0.1;
-      currentRotation.current.y += (targetRotation.current.y - currentRotation.current.y) * 0.1;
-    }
+    currentRotation.current.x += (targetRotation.current.x - currentRotation.current.x) * 0.1;
+    currentRotation.current.y += (targetRotation.current.y - currentRotation.current.y) * 0.1;
     
     camera.position.x = Math.sin(currentRotation.current.x) * 10;
     camera.position.z = Math.cos(currentRotation.current.x) * 10;
@@ -62,32 +58,43 @@ function CameraController() {
     camera.lookAt(0, 0, 0);
   });
 
+  // Update the rotation values from the parent's panResponder
+  if (panResponder.current) {
+    panResponder.current.rotation = currentRotation.current;
+    panResponder.current.targetRotation = targetRotation.current;
+  }
+
+  return null;
+}
+
+export default function HomeScreen() {
+  const { width, height } = useWindowDimensions();
+  const [isDragging, setIsDragging] = useState(false);
+  const panResponderRef = useRef({ rotation: { x: 0, y: 0 }, targetRotation: { x: 0, y: 0 } });
+  
   const panResponder = PanResponder.create({
     onStartShouldSetPanResponder: () => true,
     onPanResponderGrant: () => {
       setIsDragging(true);
     },
     onPanResponderMove: (_, gesture) => {
-      currentRotation.current.x -= gesture.dx * 0.01;
-      currentRotation.current.y = THREE.MathUtils.clamp(
-        currentRotation.current.y + gesture.dy * 0.01,
-        -1,
-        1
-      );
+      if (panResponderRef.current.rotation) {
+        panResponderRef.current.rotation.x -= gesture.dx * 0.01;
+        panResponderRef.current.rotation.y = THREE.MathUtils.clamp(
+          panResponderRef.current.rotation.y + gesture.dy * 0.01,
+          -1,
+          1
+        );
+      }
     },
     onPanResponderRelease: () => {
       setIsDragging(false);
-      // Reset target rotation to default (with some bounds)
-      targetRotation.current.x = 0;
-      targetRotation.current.y = 0;
+      if (panResponderRef.current.targetRotation) {
+        panResponderRef.current.targetRotation.x = 0;
+        panResponderRef.current.targetRotation.y = 0;
+      }
     },
   });
-
-  return <View {...panResponder.panHandlers} style={{ position: 'absolute', width: '100%', height: '100%' }} />;
-}
-
-export default function HomeScreen() {
-  const { width, height } = useWindowDimensions();
   
   return (
     <View style={{ 
@@ -106,8 +113,16 @@ export default function HomeScreen() {
         }}
       >
         <Scene />
+        <CameraRig panResponder={panResponderRef} />
       </Canvas>
-      <CameraController />
+      <View 
+        {...panResponder.panHandlers} 
+        style={{ 
+          position: 'absolute', 
+          width: '100%', 
+          height: '100%' 
+        }} 
+      />
     </View>
   );
 }
