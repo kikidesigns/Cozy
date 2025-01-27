@@ -1,15 +1,21 @@
 import { StyleSheet } from 'react-native';
-import { Text, View } from '@/components/Themed';
-import { Link } from 'expo-router';
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
+import { Colors } from '@/constants/Colors';
+import { useColorScheme } from '@/hooks/useColorScheme';
 
-export default function Welcome() {
+export default function WelcomeScreen() {
+  const colorScheme = useColorScheme();
+  
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Welcome</Text>
-      <Link href="/explore" style={styles.link}>
-        <Text style={styles.linkText}>Go to explore page</Text>
-      </Link>
-    </View>
+    <ThemedView style={styles.container}>
+      <ThemedText style={[styles.title, { color: Colors[colorScheme ?? 'light'].tint }]}>
+        Welcome to Cozy
+      </ThemedText>
+      <ThemedText style={styles.subtitle}>
+        Your new favorite space
+      </ThemedText>
+    </ThemedView>
   );
 }
 
@@ -21,16 +27,12 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   title: {
-    fontSize: 20,
+    fontSize: 32,
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginBottom: 10,
   },
-  link: {
-    marginTop: 15,
-    paddingVertical: 15,
-  },
-  linkText: {
-    fontSize: 14,
-    color: '#2e78b7',
+  subtitle: {
+    fontSize: 18,
+    opacity: 0.8,
   },
 });
