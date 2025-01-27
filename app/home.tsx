@@ -10,7 +10,7 @@ function Scene() {
   return (
     <>
       {/* Platform */}
-      <mesh position={[0, -1, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+      <mesh position={[0, -1, 0]}>
         <cylinderGeometry args={[8, 8, 0.2, 64]} />
         <meshStandardMaterial 
           color={Colors.platform}
@@ -20,7 +20,7 @@ function Scene() {
       </mesh>
 
       {/* Platform edge shadow/bevel effect */}
-      <mesh position={[0, -1.1, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+      <mesh position={[0, -1.1, 0]}>
         <cylinderGeometry args={[8.2, 7.8, 0.2, 64]} />
         <meshStandardMaterial 
           color={Colors.platform}
