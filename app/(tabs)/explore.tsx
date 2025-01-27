@@ -3,7 +3,7 @@ import { GLView } from 'expo-gl';
 import * as THREE from 'three';
 import { ExpoWebGLRenderingContext } from 'expo-gl';
 
-import { ThemedView } from '@/components/ThemedView';
+import { ThemedView } from '@components/ThemedView';
 
 export default function TabTwoScreen() {
   const onContextCreate = async (gl: ExpoWebGLRenderingContext) => {
