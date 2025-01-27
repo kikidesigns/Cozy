@@ -1,11 +1,12 @@
 import { StyleSheet } from 'react-native';
 import { GLView } from 'expo-gl';
 import * as THREE from 'three';
+import { ExpoWebGLRenderingContext } from 'expo-gl';
 
 import { ThemedView } from '@/components/ThemedView';
 
 export default function TabTwoScreen() {
-  const onContextCreate = async (gl) => {
+  const onContextCreate = async (gl: ExpoWebGLRenderingContext) => {
     // Create a WebGLRenderer without a DOM element
     const renderer = new THREE.WebGLRenderer({
       gl,
