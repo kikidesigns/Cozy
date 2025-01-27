@@ -1,39 +1,52 @@
-import { StyleSheet } from 'react-native';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
+import { Canvas } from '@react-three/fiber/native';
+import { View } from 'react-native';
+import { Colors } from '../../constants/Colors';
+import { Platform } from 'react-native';
+import { useWindowDimensions } from 'react-native';
 
-export default function HomeScreen() {
-  const colorScheme = useColorScheme();
-  
+function Scene() {
   return (
-    <ThemedView style={styles.container}>
-      <ThemedText style={[styles.title, { color: Colors[colorScheme ?? 'light'].tint }]}>
-        Home
-      </ThemedText>
-      <ThemedText style={styles.description}>
-        This is your home screen. Make yourself comfortable!
-      </ThemedText>
-    </ThemedView>
+    <>
+      {/* Platform */}
+      <mesh position={[0, -2, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <cylinderGeometry args={[10, 10, 0.5, 32]} />
+        <meshStandardMaterial color={Colors.platform} />
+      </mesh>
+
+      {/* Sun */}
+      <mesh position={[0, 5, -20]}>
+        <sphereGeometry args={[3, 32, 32]} />
+        <meshBasicMaterial color={Colors.sun} />
+      </mesh>
+
+      {/* Lighting */}
+      <ambientLight intensity={0.5} />
+      <directionalLight position={[10, 10, 5]} intensity={1} />
+    </>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  description: {
-    fontSize: 18,
-    opacity: 0.8,
-    textAlign: 'center',
-  },
-});
+export default function HomeScreen() {
+  const { width, height } = useWindowDimensions();
+  
+  return (
+    <View style={{ 
+      flex: 1, 
+      backgroundColor: Colors.background,
+      width: Platform.OS === 'web' ? width : '100%',
+      height: Platform.OS === 'web' ? height : '100%',
+    }}>
+      <Canvas
+        style={{
+          flex: 1,
+        }}
+        camera={{
+          position: [0, 2, 10],
+          fov: 75,
+        }}
+      >
+        <Scene />
+      </Canvas>
+    </View>
+  );
+}
