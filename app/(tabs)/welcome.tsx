@@ -1,9 +1,10 @@
-import { StyleSheet, View, Text, Platform, useWindowDimensions } from 'react-native';
+import { StyleSheet, View, Text, Platform, useWindowDimensions, Pressable } from 'react-native';
 import { Colors } from '../../constants/Colors';
-import { Link } from 'expo-router';
+import { useRouter } from 'expo-router';
 
 export default function WelcomeScreen() {
   const { width, height } = useWindowDimensions();
+  const router = useRouter();
   
   return (
     <View style={[
@@ -15,9 +16,12 @@ export default function WelcomeScreen() {
     ]}>
       <Text style={styles.title}>Welcome to Cozy</Text>
       <Text style={styles.subtitle}>Your personal AI companion</Text>
-      <Link href="/home" style={styles.button}>
+      <Pressable 
+        style={styles.button}
+        onPress={() => router.push('/home')}
+      >
         <Text style={styles.buttonText}>Enter</Text>
-      </Link>
+      </Pressable>
     </View>
   );
 }
