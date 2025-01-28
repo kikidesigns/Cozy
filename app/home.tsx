@@ -131,7 +131,7 @@ export default function HomeScreen() {
           position: 'absolute', 
           width: '100%', 
           height: '100%',
-          backgroundColor: 'transparent',
+          backgroundColor: 'green',
           zIndex: 1,
         }} 
       />

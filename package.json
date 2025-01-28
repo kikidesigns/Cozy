@@ -9,7 +9,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "test": "jest --watchAll",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "t": "tsc --noEmit"
   },
   "jest": {
     "preset": "jest-expo"
@@ -18,7 +19,7 @@
     "@expo/vector-icons": "^14.0.2",
     "@react-navigation/bottom-tabs": "^7.2.0",
     "@react-navigation/native": "^7.0.14",
-    "@react-three/fiber": "^8.17.12",
+    "@react-three/fiber": "8.16.8",
     "expo": "~52.0.25",
     "expo-blur": "~14.0.2",
     "expo-constants": "~17.0.4",
@@ -42,7 +43,7 @@
     "react-native-screens": "~4.4.0",
     "react-native-web": "~0.19.13",
     "react-native-webview": "13.12.5",
-    "three": "^0.172.0"
+    "three": "^0.166.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
