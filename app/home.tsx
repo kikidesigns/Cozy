@@ -110,11 +110,16 @@ export default function HomeScreen() {
     >
       <Canvas
         style={{
+          width: '100%',
+          height: '100%',
           flex: 1,
+          position: 'absolute',
         }}
         camera={{
           position: [0, 3, 10],
           fov: 75,
+          near: 0.1,
+          far: 1000,
         }}
       >
         <Scene />
@@ -127,6 +132,7 @@ export default function HomeScreen() {
           width: '100%', 
           height: '100%',
           backgroundColor: 'transparent',
+          zIndex: 1,
         }} 
       />
     </View>
