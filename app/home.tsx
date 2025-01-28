@@ -5,6 +5,15 @@ import { useWindowDimensions } from 'react-native';
 import { useRef, useState, useCallback } from 'react';
 import * as THREE from 'three';
 
+interface RotationState {
+  x: number;
+  y: number;
+}
+
+interface CameraRigProps {
+  onRotationUpdate: (current: RotationState, target: RotationState) => void;
+}
+
 function Scene() {
   return (
     <>
@@ -42,10 +51,10 @@ function Scene() {
   );
 }
 
-function CameraRig({ onRotationUpdate }) {
+function CameraRig({ onRotationUpdate }: CameraRigProps) {
   const { camera } = useThree();
-  const targetRotation = useRef({ x: 0, y: 0 });
-  const currentRotation = useRef({ x: 0, y: 0 });
+  const targetRotation = useRef<RotationState>({ x: 0, y: 0 });
+  const currentRotation = useRef<RotationState>({ x: 0, y: 0 });
   
   useFrame(() => {
     if (!camera) return;
@@ -69,10 +78,10 @@ function CameraRig({ onRotationUpdate }) {
 export default function HomeScreen() {
   const { width, height } = useWindowDimensions();
   const [isDragging, setIsDragging] = useState(false);
-  const rotationRef = useRef({ x: 0, y: 0 });
-  const targetRotationRef = useRef({ x: 0, y: 0 });
+  const rotationRef = useRef<RotationState>({ x: 0, y: 0 });
+  const targetRotationRef = useRef<RotationState>({ x: 0, y: 0 });
 
-  const handleRotationUpdate = useCallback((current, target) => {
+  const handleRotationUpdate = useCallback((current: RotationState, target: RotationState) => {
     rotationRef.current = current;
     targetRotationRef.current = target;
   }, []);
@@ -131,7 +140,7 @@ export default function HomeScreen() {
           position: 'absolute', 
           width: '100%', 
           height: '100%',
-          backgroundColor: 'green',
+          backgroundColor: 'transparent',
           zIndex: 1,
         }} 
       />
