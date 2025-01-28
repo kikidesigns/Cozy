@@ -1,7 +1,9 @@
 import { Canvas, useFrame } from '@react-three/fiber/native';
-import { View } from 'react-native';
+import { View, Dimensions } from 'react-native';
 import { useRef } from 'react';
 import * as THREE from 'three';
+
+const { width, height } = Dimensions.get('window');
 
 function Cube() {
   const meshRef = useRef<THREE.Mesh>();
@@ -23,9 +25,12 @@ function Cube() {
 
 export default function HomeScreen() {
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ width, height }}>
       <Canvas
-        style={{ flex: 1 }}
+        style={{
+          width: width,
+          height: height,
+        }}
         camera={{
           position: [0, 0, 6],
           fov: 75,
