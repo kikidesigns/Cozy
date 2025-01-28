@@ -1,5 +1,5 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber/native';
-import { View, PanResponder, Platform } from 'react-native';
+import { View, PanResponder, Platform, StyleSheet } from 'react-native';
 import { Colors } from '../constants/Colors';
 import { useWindowDimensions } from 'react-native';
 import { useRef, useState, useCallback } from 'react';
@@ -109,41 +109,41 @@ export default function HomeScreen() {
   });
 
   return (
-    <View 
-      style={{ 
-        flex: 1, 
-        backgroundColor: Colors.background,
-        width: Platform.OS === 'web' ? width : '100%',
-        height: Platform.OS === 'web' ? height : '100%',
-      }}
-    >
-      <Canvas
-        style={{
-          width: '100%',
-          height: '100%',
-          flex: 1,
-          position: 'absolute',
-        }}
-        camera={{
-          position: [0, 3, 10],
-          fov: 75,
-          near: 0.1,
-          far: 1000,
-        }}
-      >
-        <Scene />
-        <CameraRig onRotationUpdate={handleRotationUpdate} />
-      </Canvas>
+    <View style={styles.container}>
+      <View style={[styles.canvasContainer, { width, height }]}>
+        <Canvas
+          style={StyleSheet.absoluteFill}
+          camera={{
+            position: [0, 3, 10],
+            fov: 75,
+            near: 0.1,
+            far: 1000,
+          }}
+        >
+          <Scene />
+          <CameraRig onRotationUpdate={handleRotationUpdate} />
+        </Canvas>
+      </View>
       <View 
         {...panResponder.panHandlers} 
-        style={{ 
-          position: 'absolute', 
-          width: '100%', 
-          height: '100%',
-          backgroundColor: 'transparent',
-          zIndex: 1,
-        }} 
+        style={[StyleSheet.absoluteFill, styles.touchHandler]} 
       />
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  canvasContainer: {
+    flex: 1,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+  },
+  touchHandler: {
+    backgroundColor: 'transparent',
+  },
+});
