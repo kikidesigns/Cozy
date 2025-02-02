@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View } from 'react-native';
 import { GLView } from 'expo-gl';
-import { Renderer } from 'expo-three';
+import { Renderer, THREE } from 'expo-three';
 import { Scene, PerspectiveCamera } from 'three';
 
 interface ThreeCanvasProps {
@@ -17,13 +17,21 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({ onContextCreate, style
   const onGLContextCreate = async (gl: WebGLRenderingContext) => {
     // Initialize renderer
     const renderer = new Renderer({ gl });
-    renderer.setSize(gl.drawingBufferWidth, gl.drawingBufferHeight);
+    renderer.setClearColor(0x000000, 1);
+    
+    // Set size using gl.drawingBufferWidth/Height
+    const width = gl.drawingBufferWidth;
+    const height = gl.drawingBufferHeight;
+    renderer.setPixelRatio(width / height);
+    renderer.domElement.width = width;
+    renderer.domElement.height = height;
+
     rendererRef.current = renderer;
 
     // Initialize camera
     const camera = new PerspectiveCamera(
       75,
-      gl.drawingBufferWidth / gl.drawingBufferHeight,
+      width / height,
       0.1,
       1000
     );
