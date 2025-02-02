@@ -1,4 +1,4 @@
-import { Object3D, PlaneGeometry, MeshStandardMaterial, Mesh, SphereGeometry, Color, FogExp2, Scene, BoxGeometry, MeshBasicMaterial } from 'three';
+import { Object3D, PlaneGeometry, MeshStandardMaterial, Mesh, SphereGeometry, Color, FogExp2, Scene, BoxGeometry, MeshBasicMaterial, PerspectiveCamera } from 'three';
 import { Colors } from '../../constants/Colors';
 
 // Convert hex colors to Three.js colors
@@ -9,34 +9,37 @@ export class Environment extends Object3D {
   private sun: Mesh;
   private box: Mesh;
   private scene: Scene | null = null;
+  private camera: PerspectiveCamera | null = null;
 
   constructor() {
     super();
 
     // Create platform (sage green)
-    const platformGeometry = new PlaneGeometry(30, 30);
+    const platformGeometry = new PlaneGeometry(50, 50);
     const platformMaterial = new MeshStandardMaterial({ 
       color: colorToHex(Colors.sageGreen),
       roughness: 0.8,
     });
     this.platform = new Mesh(platformGeometry, platformMaterial);
     this.platform.rotation.x = -Math.PI / 2;
+    this.platform.position.y = -2; // Lower the platform
     this.platform.receiveShadow = true;
     
     // Create sun (warm beige, no shading)
-    const sunGeometry = new SphereGeometry(5, 32, 32);
+    const sunGeometry = new SphereGeometry(8, 32, 32);
     const sunMaterial = new MeshBasicMaterial({ 
       color: colorToHex(Colors.lightBeige),
     });
     this.sun = new Mesh(sunGeometry, sunMaterial);
-    this.sun.position.set(0, 15, -100); // Much further away
+    // Position sun off-center
+    this.sun.position.set(20, 25, -120);
     
     // Create box (cozy orange)
     const boxGeometry = new BoxGeometry(2, 2, 2);
     const boxMaterial = new MeshStandardMaterial({
-      color: colorToHex(Colors.orangeBrown),
-      roughness: 0.3, // More glossy
-      metalness: 0.2, // Slight metallic sheen
+      color: colorToHex(Colors.primary), // Use primary orange color
+      roughness: 0.3,
+      metalness: 0.2,
     });
     this.box = new Mesh(boxGeometry, boxMaterial);
     this.box.position.set(0, 1, 0);
@@ -52,7 +55,14 @@ export class Environment extends Object3D {
     // Set sky blue background and lighter fog
     const skyBlueColor = new Color(colorToHex(Colors.skyBlue));
     scene.background = skyBlueColor;
-    scene.fog = new FogExp2(colorToHex(Colors.skyBlue), 0.008); // Reduced fog density
+    scene.fog = new FogExp2(colorToHex(Colors.skyBlue), 0.005); // Even lighter fog
+  }
+
+  setCamera(camera: PerspectiveCamera) {
+    this.camera = camera;
+    // Adjust camera position to see platform edges
+    camera.position.set(0, 5, 12);
+    camera.lookAt(0, 0, 0);
   }
 
   update(delta: number) {
