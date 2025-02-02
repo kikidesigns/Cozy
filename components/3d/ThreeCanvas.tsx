@@ -1,8 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { GLView } from 'expo-gl';
-import { Renderer } from 'expo-three';
-import { Scene, PerspectiveCamera, Vector3, Euler, Clock } from 'three';
+import { Renderer, THREE } from 'expo-three';
+import { Scene, PerspectiveCamera, Euler } from 'three';
 
 interface ThreeCanvasProps {
   onContextCreate?: (gl: WebGLRenderingContext, scene: Scene) => void;
@@ -28,7 +28,6 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({ onContextCreate, style
   const sceneRef = useRef<Scene>(new Scene());
   const cameraRef = useRef<PerspectiveCamera>();
   const rendererRef = useRef<Renderer>();
-  const clockRef = useRef<Clock>(new Clock());
   const animationFrameRef = useRef<number>();
   const returnAnimationStartTime = useRef<number>();
 
@@ -44,8 +43,7 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({ onContextCreate, style
   const onGLContextCreate = async (gl: WebGLRenderingContext) => {
     // Initialize renderer
     const renderer = new Renderer({ gl });
-    renderer.setClearColor('#000000', 1);
-    renderer.shadowMap.enabled = true;
+    renderer.setClearColor(0x000000, 1);
     
     // Set size using gl.drawingBufferWidth/Height
     const width = gl.drawingBufferWidth;
@@ -61,7 +59,8 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({ onContextCreate, style
       0.1,
       1000
     );
-    camera.position.set(0, 3, 7); // Position camera
+    camera.position.z = 7; // Moved back for better view
+    camera.position.y = 3; // Higher position
     camera.lookAt(0, 1, 0); // Look at pawn height
     cameraRef.current = camera;
 
@@ -84,17 +83,7 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({ onContextCreate, style
 
     // Start render loop
     const render = () => {
-      const delta = clockRef.current.getDelta();
       animationFrameRef.current = requestAnimationFrame(render);
-      
-      // Update any animations
-      if (sceneRef.current) {
-        sceneRef.current.traverse((object) => {
-          if ('update' in object && typeof object.update === 'function') {
-            object.update(delta);
-          }
-        });
-      }
 
       // Handle return animation if active
       if (!dragStateRef.current.isDragging && returnAnimationStartTime.current && cameraRef.current) {
