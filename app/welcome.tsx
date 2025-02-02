@@ -74,12 +74,18 @@ export default function WelcomeScreen() {
               <TouchableOpacity
                 key={color}
                 style={[
-                  styles.colorOption,
-                  { backgroundColor: color },
-                  selectedColor === color && styles.selectedColor,
+                  styles.colorOptionWrapper,
+                  selectedColor === color && styles.selectedWrapper,
                 ]}
                 onPress={() => setSelectedColor(color)}
-              />
+              >
+                <View
+                  style={[
+                    styles.colorOption,
+                    { backgroundColor: color },
+                  ]}
+                />
+              </TouchableOpacity>
             ))}
           </View>
         </View>
@@ -173,19 +179,30 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'center',
   },
-  colorOption: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+  colorOptionWrapper: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     margin: 8,
+    padding: 4,
+    backgroundColor: Colors.white,
+    justifyContent: 'center',
+    alignItems: 'center',
     shadowColor: Colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 2,
     elevation: 2,
   },
-  selectedColor: {
-    borderWidth: 3,
+  selectedWrapper: {
+    backgroundColor: Colors.orangeBrown,
+    transform: [{ scale: 1.1 }],
+  },
+  colorOption: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 2,
     borderColor: Colors.white,
   },
   buttonContainer: {
