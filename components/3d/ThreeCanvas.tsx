@@ -5,7 +5,7 @@ import { Renderer, THREE } from 'expo-three';
 import { Scene, PerspectiveCamera } from 'three';
 
 interface ThreeCanvasProps {
-  onContextCreate?: (gl: WebGLRenderingContext) => void;
+  onContextCreate?: (gl: WebGLRenderingContext, scene: Scene) => void;
   style?: any;
 }
 
@@ -36,10 +36,12 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({ onContextCreate, style
       1000
     );
     camera.position.z = 5;
+    camera.position.y = 2;
+    camera.lookAt(0, 0, 0);
     cameraRef.current = camera;
 
     // Call custom context creation handler
-    onContextCreate?.(gl);
+    onContextCreate?.(gl, sceneRef.current);
 
     // Start render loop
     const render = () => {
