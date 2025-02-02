@@ -3,6 +3,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, SafeAreaView } from 'react-native';
 import { globalStyles } from '../../constants/styles';
 import { Colors } from '../../constants/Colors';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 interface Task {
   id: number;
@@ -10,6 +11,7 @@ interface Task {
   status: 'pending' | 'completed' | 'in_progress';
   date: string;
   description?: string;
+  priority?: 'high' | 'medium' | 'low';
 }
 
 export default function JournalScreen() {
@@ -19,21 +21,24 @@ export default function JournalScreen() {
       title: 'Search for Bitcoin news', 
       status: 'pending',
       date: '2024-01-20',
-      description: 'Find and analyze recent Bitcoin news and market trends.'
+      description: 'Find and analyze recent Bitcoin news and market trends.',
+      priority: 'high'
     },
     { 
       id: 2, 
       title: 'Monitor Lightning Network status', 
       status: 'completed',
       date: '2024-01-19',
-      description: 'Check Lightning Network capacity and channel status.'
+      description: 'Check Lightning Network capacity and channel status.',
+      priority: 'medium'
     },
     { 
       id: 3, 
       title: 'Check Nostr feed updates', 
       status: 'in_progress',
       date: '2024-01-18',
-      description: 'Review and analyze recent Nostr feed activity.'
+      description: 'Review and analyze recent Nostr feed activity.',
+      priority: 'low'
     },
   ];
 
@@ -60,21 +65,32 @@ export default function JournalScreen() {
   const getStatusIcon = (status: Task['status']) => {
     switch (status) {
       case 'completed':
-        return '✓';
+        return 'check-circle';
       case 'in_progress':
-        return '⚡';
+        return 'clock-o';
       case 'pending':
-        return '⏳';
+        return 'hourglass-o';
       default:
-        return '•';
+        return 'circle-o';
+    }
+  };
+
+  const getPriorityColor = (priority?: Task['priority']) => {
+    switch (priority) {
+      case 'high':
+        return Colors.error;
+      case 'medium':
+        return Colors.warning;
+      case 'low':
+        return Colors.sageGreen;
+      default:
+        return Colors.softGray;
     }
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={[globalStyles.container, styles.container]}>
-        <Text style={[globalStyles.title, styles.title]}>Journal</Text>
-
         <ScrollView 
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
@@ -82,33 +98,44 @@ export default function JournalScreen() {
           {tasks.map(task => (
             <TouchableOpacity 
               key={task.id} 
-              style={[styles.taskCard, { borderLeftColor: getStatusColor(task.status) }]}
+              style={[styles.taskCard]}
               onPress={() => handleTaskPress(task.id)}
             >
-              <View style={styles.taskHeader}>
-                <Text style={styles.taskTitle}>
-                  {task.title}
-                </Text>
-                <View style={[styles.statusBadge, { backgroundColor: getStatusColor(task.status) }]}>
-                  <Text style={styles.statusIcon}>
-                    {getStatusIcon(task.status)}
+              <View style={[styles.priorityIndicator, { backgroundColor: getPriorityColor(task.priority) }]} />
+              <View style={styles.taskContent}>
+                <View style={styles.taskHeader}>
+                  <Text style={styles.taskTitle}>
+                    {task.title}
                   </Text>
+                  <View style={[styles.statusBadge, { backgroundColor: getStatusColor(task.status) }]}>
+                    <FontAwesome 
+                      name={getStatusIcon(task.status)} 
+                      size={14} 
+                      color={Colors.white}
+                      style={styles.statusIcon}
+                    />
+                  </View>
                 </View>
+                
+                {task.description && (
+                  <Text style={styles.taskDescription}>
+                    {task.description}
+                  </Text>
+                )}
+                
+                <Text style={styles.taskDate}>{task.date}</Text>
               </View>
-              
-              {task.description && (
-                <Text style={styles.taskDescription}>
-                  {task.description}
-                </Text>
-              )}
-              
-              <Text style={styles.taskDate}>{task.date}</Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
 
-        <TouchableOpacity style={styles.addButton}>
-          <Text style={styles.addButtonText}>+</Text>
+        <TouchableOpacity 
+          style={styles.addButton}
+          onPress={() => {
+            // TODO: Implement add task functionality
+          }}
+        >
+          <FontAwesome name="plus" size={24} color={Colors.white} />
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -121,29 +148,33 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.warmBeige,
   },
   container: {
-    padding: 20,
-  },
-  title: {
-    color: Colors.darkOrangeBrown,
-    marginBottom: 20,
+    padding: 16,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 20,
+    paddingBottom: 80,
   },
   taskCard: {
+    flexDirection: 'row',
     backgroundColor: Colors.white,
     borderRadius: 12,
-    padding: 15,
-    marginBottom: 15,
-    borderLeftWidth: 4,
+    marginBottom: 12,
     shadowColor: Colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    overflow: 'hidden',
+  },
+  priorityIndicator: {
+    width: 4,
+    backgroundColor: Colors.softGray,
+  },
+  taskContent: {
+    flex: 1,
+    padding: 16,
   },
   taskHeader: {
     flexDirection: 'row',
@@ -156,30 +187,29 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: Colors.text,
     flex: 1,
-    marginRight: 10,
+    marginRight: 12,
   },
   statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    minWidth: 30,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: Colors.softGray,
   },
   statusIcon: {
-    color: Colors.white,
-    fontSize: 14,
-    fontWeight: '600',
+    marginLeft: 1, // Fine-tune icon position
   },
   taskDescription: {
     fontSize: 14,
     color: Colors.text,
     opacity: 0.8,
     marginBottom: 8,
+    lineHeight: 20,
   },
   taskDate: {
     fontSize: 12,
     color: Colors.softGray,
-    marginTop: 4,
   },
   addButton: {
     position: 'absolute',
@@ -188,18 +218,13 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.orangeBrown,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: Colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 5,
-  },
-  addButtonText: {
-    color: Colors.white,
-    fontSize: 32,
-    marginTop: -2,
   },
 });
