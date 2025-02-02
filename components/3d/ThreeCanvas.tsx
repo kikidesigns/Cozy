@@ -1,8 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { GLView } from 'expo-gl';
-import { Renderer, THREE } from 'expo-three';
-import { Scene, PerspectiveCamera, Vector3, Euler } from 'three';
+import { Renderer } from 'expo-three';
+import { Scene, PerspectiveCamera, Vector3, Euler, Clock } from 'three';
 
 interface ThreeCanvasProps {
   onContextCreate?: (gl: WebGLRenderingContext, scene: Scene) => void;
@@ -15,12 +15,11 @@ interface DragState {
   startY: number;
   currentX: number;
   currentY: number;
-  originalCameraPosition: Vector3;
   originalCameraRotation: Euler;
 }
 
 // Animation configuration
-const DRAG_SENSITIVITY = 0.01;
+const DRAG_SENSITIVITY = 0.005;
 const RETURN_ANIMATION_DURATION = 1000; // ms
 const MAX_ROTATION_X = Math.PI / 4; // 45 degrees
 const MAX_ROTATION_Y = Math.PI / 3; // 60 degrees
@@ -29,6 +28,7 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({ onContextCreate, style
   const sceneRef = useRef<Scene>(new Scene());
   const cameraRef = useRef<PerspectiveCamera>();
   const rendererRef = useRef<Renderer>();
+  const clockRef = useRef<Clock>(new Clock());
   const animationFrameRef = useRef<number>();
   const returnAnimationStartTime = useRef<number>();
 
@@ -38,14 +38,14 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({ onContextCreate, style
     startY: 0,
     currentX: 0,
     currentY: 0,
-    originalCameraPosition: new Vector3(),
     originalCameraRotation: new Euler()
   });
 
   const onGLContextCreate = async (gl: WebGLRenderingContext) => {
     // Initialize renderer
     const renderer = new Renderer({ gl });
-    renderer.setClearColor(0x000000, 1);
+    renderer.setClearColor('#000000', 1);
+    renderer.shadowMap.enabled = true;
     
     // Set size using gl.drawingBufferWidth/Height
     const width = gl.drawingBufferWidth;
@@ -56,18 +56,16 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({ onContextCreate, style
 
     // Initialize camera with better positioning
     const camera = new PerspectiveCamera(
-      60, // Reduced FOV for better perspective
+      60, // FOV
       width / height,
       0.1,
       1000
     );
-    camera.position.z = 7; // Moved back for better view
-    camera.position.y = 3; // Higher position
+    camera.position.set(0, 3, 7); // Position camera
     camera.lookAt(0, 1, 0); // Look at pawn height
     cameraRef.current = camera;
 
-    // Store original camera transform
-    dragStateRef.current.originalCameraPosition.copy(camera.position);
+    // Store original camera rotation
     dragStateRef.current.originalCameraRotation.copy(camera.rotation);
 
     // Call custom context creation handler
@@ -78,42 +76,62 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({ onContextCreate, style
     canvas.addEventListener('mousedown', onDragStart);
     canvas.addEventListener('mousemove', onDragMove);
     canvas.addEventListener('mouseup', onDragEnd);
-    canvas.addEventListener('touchstart', onTouchStart);
-    canvas.addEventListener('touchmove', onTouchMove);
+    canvas.addEventListener('mouseleave', onDragEnd);
+    canvas.addEventListener('touchstart', onTouchStart, { passive: false });
+    canvas.addEventListener('touchmove', onTouchMove, { passive: false });
     canvas.addEventListener('touchend', onDragEnd);
+    canvas.addEventListener('touchcancel', onDragEnd);
 
     // Start render loop
     const render = () => {
+      const delta = clockRef.current.getDelta();
       animationFrameRef.current = requestAnimationFrame(render);
       
+      // Update any animations
+      if (sceneRef.current) {
+        sceneRef.current.traverse((object) => {
+          if ('update' in object && typeof object.update === 'function') {
+            object.update(delta);
+          }
+        });
+      }
+
       // Handle return animation if active
-      if (!dragStateRef.current.isDragging && returnAnimationStartTime.current) {
+      if (!dragStateRef.current.isDragging && returnAnimationStartTime.current && cameraRef.current) {
         const elapsed = Date.now() - returnAnimationStartTime.current;
         const progress = Math.min(elapsed / RETURN_ANIMATION_DURATION, 1);
         
-        if (progress < 1 && cameraRef.current) {
+        if (progress < 1) {
           // Smooth easing function
           const easeOutCubic = (t: number) => 1 - Math.pow(1 - t, 3);
           const t = easeOutCubic(progress);
           
           // Interpolate camera rotation back to original
-          cameraRef.current.rotation.x = dragStateRef.current.originalCameraRotation.x * (1 - t) + 
-                                       dragStateRef.current.currentX * t;
-          cameraRef.current.rotation.y = dragStateRef.current.originalCameraRotation.y * (1 - t) + 
-                                       dragStateRef.current.currentY * t;
+          cameraRef.current.rotation.x = lerp(
+            dragStateRef.current.currentX,
+            dragStateRef.current.originalCameraRotation.x,
+            t
+          );
+          cameraRef.current.rotation.y = lerp(
+            dragStateRef.current.currentY,
+            dragStateRef.current.originalCameraRotation.y,
+            t
+          );
         } else {
           // Animation complete
           returnAnimationStartTime.current = undefined;
-          if (cameraRef.current) {
-            cameraRef.current.rotation.copy(dragStateRef.current.originalCameraRotation);
-          }
+          cameraRef.current.rotation.copy(dragStateRef.current.originalCameraRotation);
         }
       }
 
-      renderer.render(sceneRef.current, cameraRef.current!);
+      renderer.render(sceneRef.current, camera);
       gl.endFrameEXP();
     };
     render();
+  };
+
+  const lerp = (start: number, end: number, t: number) => {
+    return start * (1 - t) + end * t;
   };
 
   const onDragStart = (event: MouseEvent) => {
@@ -160,11 +178,11 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({ onContextCreate, style
     // Calculate new rotation values with limits
     const newRotationX = Math.max(
       -MAX_ROTATION_X,
-      Math.min(MAX_ROTATION_X, dragStateRef.current.originalCameraRotation.x + deltaY)
+      Math.min(MAX_ROTATION_X, dragStateRef.current.originalCameraRotation.x - deltaY)
     );
     const newRotationY = Math.max(
       -MAX_ROTATION_Y,
-      Math.min(MAX_ROTATION_Y, dragStateRef.current.originalCameraRotation.y + deltaX)
+      Math.min(MAX_ROTATION_Y, dragStateRef.current.originalCameraRotation.y - deltaX)
     );
 
     // Apply new rotation
@@ -177,6 +195,7 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({ onContextCreate, style
   };
 
   const onDragEnd = () => {
+    if (!dragStateRef.current.isDragging) return;
     dragStateRef.current.isDragging = false;
     returnAnimationStartTime.current = Date.now();
   };
@@ -197,9 +216,11 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({ onContextCreate, style
         canvas.removeEventListener('mousedown', onDragStart);
         canvas.removeEventListener('mousemove', onDragMove);
         canvas.removeEventListener('mouseup', onDragEnd);
+        canvas.removeEventListener('mouseleave', onDragEnd);
         canvas.removeEventListener('touchstart', onTouchStart);
         canvas.removeEventListener('touchmove', onTouchMove);
         canvas.removeEventListener('touchend', onDragEnd);
+        canvas.removeEventListener('touchcancel', onDragEnd);
       }
     };
   }, []);
