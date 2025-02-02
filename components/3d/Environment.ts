@@ -22,7 +22,7 @@ export class Environment extends Object3D {
     });
     this.platform = new Mesh(platformGeometry, platformMaterial);
     this.platform.rotation.x = -Math.PI / 2;
-    this.platform.position.y = -2; // Lower the platform
+    this.platform.position.y = -3; // Lower the platform more
     this.platform.receiveShadow = true;
     
     // Create sun (warm beige, no shading)
@@ -37,7 +37,7 @@ export class Environment extends Object3D {
     // Create box (cozy orange)
     const boxGeometry = new BoxGeometry(2, 2, 2);
     const boxMaterial = new MeshStandardMaterial({
-      color: colorToHex(Colors.primary), // Use primary orange color
+      color: colorToHex(Colors.orangeBrown),
       roughness: 0.3,
       metalness: 0.2,
     });
@@ -61,7 +61,7 @@ export class Environment extends Object3D {
   setCamera(camera: PerspectiveCamera) {
     this.camera = camera;
     // Adjust camera position to see platform edges
-    camera.position.set(0, 5, 12);
+    camera.position.set(0, 8, 15); // Move camera back and up more
     camera.lookAt(0, 0, 0);
   }
 
