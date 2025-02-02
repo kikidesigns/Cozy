@@ -1,4 +1,4 @@
-import { Object3D, PlaneGeometry, MeshStandardMaterial, Mesh, SphereGeometry, Color, FogExp2, Scene, BoxGeometry } from 'three';
+import { Object3D, PlaneGeometry, MeshStandardMaterial, Mesh, SphereGeometry, Color, FogExp2, Scene, BoxGeometry, MeshBasicMaterial } from 'three';
 import { Colors } from '../../constants/Colors';
 
 // Convert hex colors to Three.js colors
@@ -14,7 +14,7 @@ export class Environment extends Object3D {
     super();
 
     // Create platform (sage green)
-    const platformGeometry = new PlaneGeometry(20, 20);
+    const platformGeometry = new PlaneGeometry(30, 30);
     const platformMaterial = new MeshStandardMaterial({ 
       color: colorToHex(Colors.sageGreen),
       roughness: 0.8,
@@ -23,22 +23,20 @@ export class Environment extends Object3D {
     this.platform.rotation.x = -Math.PI / 2;
     this.platform.receiveShadow = true;
     
-    // Create sun (cream colored)
-    const sunGeometry = new SphereGeometry(3, 32, 32);
-    const sunMaterial = new MeshStandardMaterial({ 
-      color: colorToHex(Colors.warmBeige),
-      emissive: colorToHex(Colors.warmBeige),
-      emissiveIntensity: 0.5,
-      roughness: 0.1,
+    // Create sun (warm beige, no shading)
+    const sunGeometry = new SphereGeometry(5, 32, 32);
+    const sunMaterial = new MeshBasicMaterial({ 
+      color: colorToHex(Colors.lightBeige),
     });
     this.sun = new Mesh(sunGeometry, sunMaterial);
-    this.sun.position.set(0, 5, -30); // Positioned on horizon
+    this.sun.position.set(0, 15, -100); // Much further away
     
-    // Create box (orange-brown)
+    // Create box (cozy orange)
     const boxGeometry = new BoxGeometry(2, 2, 2);
     const boxMaterial = new MeshStandardMaterial({
       color: colorToHex(Colors.orangeBrown),
-      roughness: 0.7,
+      roughness: 0.3, // More glossy
+      metalness: 0.2, // Slight metallic sheen
     });
     this.box = new Mesh(boxGeometry, boxMaterial);
     this.box.position.set(0, 1, 0);
@@ -51,9 +49,10 @@ export class Environment extends Object3D {
 
   setScene(scene: Scene) {
     this.scene = scene;
-    // Add sky blue fog for atmosphere
-    scene.fog = new FogExp2(colorToHex(Colors.skyBlue), 0.015);
-    scene.background = new Color(colorToHex(Colors.skyBlue));
+    // Set sky blue background and lighter fog
+    const skyBlueColor = new Color(colorToHex(Colors.skyBlue));
+    scene.background = skyBlueColor;
+    scene.fog = new FogExp2(colorToHex(Colors.skyBlue), 0.008); // Reduced fog density
   }
 
   update(delta: number) {
@@ -67,7 +66,7 @@ export class Environment extends Object3D {
     this.platform.geometry.dispose();
     (this.platform.material as MeshStandardMaterial).dispose();
     this.sun.geometry.dispose();
-    (this.sun.material as MeshStandardMaterial).dispose();
+    (this.sun.material as MeshBasicMaterial).dispose();
     this.box.geometry.dispose();
     (this.box.material as MeshStandardMaterial).dispose();
   }
