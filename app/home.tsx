@@ -1,13 +1,18 @@
 import { router } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
-import { globalStyles } from '../constants/styles';
+import { ThreeCanvas } from '../components/3d/ThreeCanvas';
+import { AgentPawn } from '../components/3d/AgentPawn';
+import { Environment } from '../components/3d/Environment';
+import { Lighting } from '../components/3d/Lighting';
+import { Scene } from 'three';
 
 export default function HomeScreen() {
   const [message, setMessage] = useState('');
   const [chatMessages, setChatMessages] = useState([
     { id: 1, text: 'Hello! How can I help you today?', isAgent: true },
   ]);
+  const sceneRef = useRef<Scene>();
 
   const handleSend = () => {
     if (message.trim()) {
@@ -23,8 +28,31 @@ export default function HomeScreen() {
     router.replace('/welcome');
   };
 
+  const handleContextCreate = (gl: WebGLRenderingContext) => {
+    // Add environment (platform and sun)
+    const environment = new Environment();
+    sceneRef.current?.add(environment);
+
+    // Add lighting
+    const lighting = new Lighting();
+    sceneRef.current?.add(lighting);
+
+    // Add agent pawn
+    const pawn = new AgentPawn();
+    pawn.position.y = 1; // Lift pawn above platform
+    sceneRef.current?.add(pawn);
+  };
+
   return (
     <View style={styles.container}>
+      {/* 3D Canvas */}
+      <View style={styles.canvasContainer}>
+        <ThreeCanvas
+          style={styles.canvas}
+          onContextCreate={handleContextCreate}
+        />
+      </View>
+
       {/* Top Bar */}
       <View style={styles.topBar}>
         <View style={styles.profileSection}>
@@ -80,6 +108,7 @@ export default function HomeScreen() {
           value={message}
           onChangeText={setMessage}
           placeholder="Type a message..."
+          placeholderTextColor="#666"
           multiline
         />
         <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
@@ -95,13 +124,21 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#1a1a1a',
   },
+  canvasContainer: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 0,
+  },
+  canvas: {
+    flex: 1,
+  },
   topBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 10,
     paddingTop: 50,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: 'rgba(42, 42, 42, 0.8)',
+    zIndex: 1,
   },
   profileSection: {
     flexDirection: 'row',
@@ -172,6 +209,7 @@ const styles = StyleSheet.create({
   chatContainer: {
     flex: 1,
     padding: 10,
+    zIndex: 1,
   },
   message: {
     maxWidth: '80%',
@@ -180,11 +218,11 @@ const styles = StyleSheet.create({
     marginVertical: 5,
   },
   agentMessage: {
-    backgroundColor: '#333',
+    backgroundColor: 'rgba(51, 51, 51, 0.9)',
     alignSelf: 'flex-start',
   },
   userMessage: {
-    backgroundColor: '#4ECDC4',
+    backgroundColor: 'rgba(78, 205, 196, 0.9)',
     alignSelf: 'flex-end',
   },
   messageText: {
@@ -193,11 +231,12 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     padding: 10,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: 'rgba(42, 42, 42, 0.8)',
+    zIndex: 1,
   },
   input: {
     flex: 1,
-    backgroundColor: '#333',
+    backgroundColor: 'rgba(51, 51, 51, 0.9)',
     borderRadius: 20,
     paddingHorizontal: 15,
     paddingVertical: 10,
