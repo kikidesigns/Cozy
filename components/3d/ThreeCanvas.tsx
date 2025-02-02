@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { GLView } from 'expo-gl';
 import { Renderer, THREE } from 'expo-three';
 import { Scene, PerspectiveCamera } from 'three';
@@ -22,22 +22,20 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({ onContextCreate, style
     // Set size using gl.drawingBufferWidth/Height
     const width = gl.drawingBufferWidth;
     const height = gl.drawingBufferHeight;
-    renderer.setPixelRatio(width / height);
-    renderer.domElement.width = width;
-    renderer.domElement.height = height;
+    renderer.setSize(width, height);
 
     rendererRef.current = renderer;
 
-    // Initialize camera
+    // Initialize camera with better positioning
     const camera = new PerspectiveCamera(
-      75,
+      60, // Reduced FOV for better perspective
       width / height,
       0.1,
       1000
     );
-    camera.position.z = 5;
-    camera.position.y = 2;
-    camera.lookAt(0, 0, 0);
+    camera.position.z = 7; // Moved back for better view
+    camera.position.y = 3; // Higher position
+    camera.lookAt(0, 1, 0); // Look at pawn height
     cameraRef.current = camera;
 
     // Call custom context creation handler
@@ -62,11 +60,23 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({ onContextCreate, style
   }, []);
 
   return (
-    <View style={style}>
+    <View style={[styles.container, style]}>
       <GLView
-        style={{ flex: 1 }}
+        style={styles.glView}
         onContextCreate={onGLContextCreate}
       />
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    overflow: 'hidden',
+  },
+  glView: {
+    flex: 1,
+    width: '100%',
+    height: '100%',
+  },
+});
