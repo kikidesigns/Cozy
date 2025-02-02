@@ -5,7 +5,7 @@ export const globalStyles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: Colors.warmBeige,
+    backgroundColor: Colors.background,
   },
   title: {
     fontSize: 24,
@@ -14,7 +14,7 @@ export const globalStyles = StyleSheet.create({
     color: Colors.text,
   },
   button: {
-    backgroundColor: Colors.orangeBrown,
+    backgroundColor: Colors.primary,
     padding: 15,
     borderRadius: 8,
     alignItems: 'center',
