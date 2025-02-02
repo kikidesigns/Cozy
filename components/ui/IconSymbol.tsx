@@ -4,6 +4,8 @@ import { StyleProp, TextStyle } from 'react-native';
 const MAPPING = {
   'house.fill': 'home',
   'paperplane.fill': 'send',
+  'chevron.left.forwardslash.chevron.right': 'code',
+  'chevron.right': 'chevron-right',
   // Add other mappings as needed
 } as const;
 
