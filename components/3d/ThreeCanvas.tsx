@@ -148,6 +148,10 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({ onContextCreate, style
     const deltaY = (event.clientY - dragStateRef.current.startY) * DRAG_SENSITIVITY;
     
     updateCameraRotation(deltaX, deltaY);
+    
+    // Update start position for next move
+    dragStateRef.current.startX = event.clientX;
+    dragStateRef.current.startY = event.clientY;
   };
 
   const onTouchMove = (event: TouchEvent) => {
@@ -159,6 +163,10 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({ onContextCreate, style
     const deltaY = (touch.clientY - dragStateRef.current.startY) * DRAG_SENSITIVITY;
     
     updateCameraRotation(deltaX, deltaY);
+    
+    // Update start position for next move
+    dragStateRef.current.startX = touch.clientX;
+    dragStateRef.current.startY = touch.clientY;
   };
 
   const updateCameraRotation = (deltaX: number, deltaY: number) => {
@@ -167,11 +175,11 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({ onContextCreate, style
     // Calculate new rotation values with limits
     const newRotationX = Math.max(
       -MAX_ROTATION_X,
-      Math.min(MAX_ROTATION_X, dragStateRef.current.originalCameraRotation.x - deltaY)
+      Math.min(MAX_ROTATION_X, cameraRef.current.rotation.x - deltaY)
     );
     const newRotationY = Math.max(
       -MAX_ROTATION_Y,
-      Math.min(MAX_ROTATION_Y, dragStateRef.current.originalCameraRotation.y - deltaX)
+      Math.min(MAX_ROTATION_Y, cameraRef.current.rotation.y - deltaX)
     );
 
     // Apply new rotation
