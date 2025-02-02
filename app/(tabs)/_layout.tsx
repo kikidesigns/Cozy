@@ -16,26 +16,31 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
+        // Use cozy orange as active color
         tabBarActiveTintColor: Colors.orangeBrown,
         tabBarInactiveTintColor: Colors.softGray,
         tabBarStyle: {
-          backgroundColor: Colors.white,
+          backgroundColor: Colors.lightBeige,
           borderTopColor: Colors.softGray,
           borderTopWidth: 1,
           elevation: 0,
           shadowOpacity: 0,
+          height: 60,
+          paddingBottom: 8,
+          paddingTop: 8,
         },
         headerStyle: {
-          backgroundColor: Colors.warmBeige,
+          backgroundColor: Colors.orangeBrown,
           elevation: 0,
           shadowOpacity: 0,
-          borderBottomWidth: 1,
-          borderBottomColor: Colors.softGray,
+          borderBottomWidth: 0,
         },
-        headerTintColor: Colors.darkOrangeBrown,
+        headerTintColor: Colors.white,
         headerTitleStyle: {
           fontWeight: '600',
+          fontSize: 18,
         },
+        headerShadowVisible: false,
       }}>
       <Tabs.Screen
         name="index"
