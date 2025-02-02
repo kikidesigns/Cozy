@@ -26,7 +26,10 @@ export default function JournalScreen() {
   ];
 
   const handleTaskPress = (taskId: number) => {
-    router.push(`/task/${taskId}`);
+    router.push({
+      pathname: "/task/[id]",
+      params: { id: taskId }
+    });
   };
 
   return (
