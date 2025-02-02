@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import React, { useState, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import { ThreeCanvas } from '../components/3d/ThreeCanvas';
 import { AgentPawn } from '../components/3d/AgentPawn';
 import { Environment } from '../components/3d/Environment';
@@ -118,17 +118,24 @@ export default function HomeScreen() {
   );
 }
 
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#1a1a1a',
   },
   canvasContainer: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: SCREEN_WIDTH,
+    height: SCREEN_HEIGHT,
     zIndex: 0,
   },
   canvas: {
-    flex: 1,
+    width: '100%',
+    height: '100%',
   },
   topBar: {
     flexDirection: 'row',
