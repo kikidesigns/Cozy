@@ -1,14 +1,50 @@
-# Cozy
+# Welcome to your Expo app 👋
 
-Cozy is an innovative mobile application designed to provide users with personalized, context-aware AI agents. Each user is paired with a unique agent, equipped with its own Bitcoin wallet, enabling seamless agent-to-agent transactions. Additionally, agents can interact with the NOSTR protocol to search for items or data shared by users on NOSTR clients, enhancing the overall user experience.
+This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
 
-## Features
+## Get started
 
-- **Personalized Agents**: Each user is assigned a unique agent that can be customized with names, avatars, and traits, providing a personalized experience.
-- **Integrated Bitcoin Wallets**: Every agent comes with its own Bitcoin wallet, allowing for secure and straightforward transactions.
-- **Agent-to-Agent Transactions**: Facilitates direct transactions between agents, streamlining the process for users.
-- **NOSTR Protocol Integration**: Agents can search for items or data shared by users on NOSTR clients, expanding the scope of information accessible within the app.
+1. Install dependencies
 
-## Technical Overview
+   ```bash
+   npm install
+   ```
 
-Cozy is developed using **React Native** with **Expo**, ensuring a smooth and responsive user experience across various devices. The integration of **Three.js** allows for interactive and engaging agent representations. The app employs secure methods for Bitcoin wallet management and transactions, adhering to industry best practices.
+2. Start the app
+
+   ```bash
+    npx expo start
+   ```
+
+In the output, you'll find options to open the app in a
+
+- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
+- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
+- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
+- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+
+You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+
+## Get a fresh project
+
+When you're ready, run:
+
+```bash
+npm run reset-project
+```
+
+This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+
+## Learn more
+
+To learn more about developing your project with Expo, look at the following resources:
+
+- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
+- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+
+## Join the community
+
+Join our community of developers creating universal apps.
+
+- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
+- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
