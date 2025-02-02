@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { ThreeCanvas } from '../components/3d/ThreeCanvas';
 import { AgentPawn } from '../components/3d/AgentPawn';
@@ -12,7 +12,6 @@ export default function HomeScreen() {
   const [chatMessages, setChatMessages] = useState([
     { id: 1, text: 'Hello! How can I help you today?', isAgent: true },
   ]);
-  const sceneRef = useRef<Scene>();
 
   const handleSend = () => {
     if (message.trim()) {
@@ -28,19 +27,19 @@ export default function HomeScreen() {
     router.replace('/welcome');
   };
 
-  const handleContextCreate = (gl: WebGLRenderingContext) => {
+  const handleContextCreate = (gl: WebGLRenderingContext, scene: Scene) => {
     // Add environment (platform and sun)
     const environment = new Environment();
-    sceneRef.current?.add(environment);
+    scene.add(environment);
 
     // Add lighting
     const lighting = new Lighting();
-    sceneRef.current?.add(lighting);
+    scene.add(lighting);
 
     // Add agent pawn
     const pawn = new AgentPawn();
     pawn.position.y = 1; // Lift pawn above platform
-    sceneRef.current?.add(pawn);
+    scene.add(pawn);
   };
 
   return (
