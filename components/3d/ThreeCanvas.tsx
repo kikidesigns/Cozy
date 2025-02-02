@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { GLView } from 'expo-gl';
-import { Renderer, THREE } from 'expo-three';
+import { Renderer } from 'expo-three';
 import { Scene, PerspectiveCamera, Euler } from 'three';
 
 interface ThreeCanvasProps {
@@ -54,7 +54,7 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({ onContextCreate, style
 
     // Initialize camera with better positioning
     const camera = new PerspectiveCamera(
-      60, // FOV
+      60, // Reduced FOV for better perspective
       width / height,
       0.1,
       1000
