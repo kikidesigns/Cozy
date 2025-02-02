@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Scene, WebGLRenderer } from 'three';
+import { Scene } from 'three';
 import { Renderer } from 'expo-three';
 
 interface Use3DContextProps {
@@ -8,7 +8,7 @@ interface Use3DContextProps {
 
 export const use3DContext = ({ onCleanup }: Use3DContextProps = {}) => {
   const sceneRef = useRef<Scene>();
-  const rendererRef = useRef<WebGLRenderer>();
+  const rendererRef = useRef<Renderer>();
   const frameIdRef = useRef<number>();
 
   useEffect(() => {
@@ -31,7 +31,15 @@ export const use3DContext = ({ onCleanup }: Use3DContextProps = {}) => {
   const initContext = (gl: WebGLRenderingContext) => {
     // Initialize renderer
     const renderer = new Renderer({ gl });
-    renderer.setSize(gl.drawingBufferWidth, gl.drawingBufferHeight);
+    renderer.setClearColor(0x000000, 1);
+    
+    // Set size using gl.drawingBufferWidth/Height
+    const width = gl.drawingBufferWidth;
+    const height = gl.drawingBufferHeight;
+    renderer.setPixelRatio(width / height);
+    renderer.domElement.width = width;
+    renderer.domElement.height = height;
+    
     rendererRef.current = renderer;
 
     // Initialize scene
