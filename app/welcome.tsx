@@ -14,6 +14,9 @@ const AGENT_COLORS = [
   Colors.lightBeige,
 ];
 
+// Cozy yellow for selection highlight
+const SELECTION_COLOR = '#FFD700';
+
 export default function WelcomeScreen() {
   const [npub, setNpub] = useState('');
   const [nsec, setNsec] = useState('');
@@ -195,7 +198,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   selectedWrapper: {
-    backgroundColor: Colors.orangeBrown,
+    backgroundColor: SELECTION_COLOR,
     transform: [{ scale: 1.1 }],
   },
   colorOption: {
