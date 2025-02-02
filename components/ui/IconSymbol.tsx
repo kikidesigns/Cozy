@@ -16,9 +16,10 @@ interface IconSymbolProps {
   color: string;
   size: number;
   style?: StyleProp<TextStyle>;
+  weight?: 'medium' | 'regular' | 'bold'; // Added weight prop
 }
 
-export function IconSymbol({ name, color, size, style }: IconSymbolProps) {
+export function IconSymbol({ name, color, size, style, weight }: IconSymbolProps) {
   return (
     <MaterialIcons 
       color={color} 
