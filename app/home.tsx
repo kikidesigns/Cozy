@@ -21,12 +21,16 @@ import { Scene } from 'three';
 import { Colors } from '../constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const CHAT_HEIGHT = SCREEN_HEIGHT / 3; // One third of screen height
+
 export default function HomeScreen() {
   const [message, setMessage] = useState('');
   const [chatMessages, setChatMessages] = useState([
     { id: 1, text: 'Hello! How can I help you today?', isAgent: true },
   ]);
   const scrollViewRef = useRef<ScrollView>(null);
+  const inputRef = useRef<TextInput>(null);
 
   const handleSend = () => {
     if (message.trim()) {
@@ -35,7 +39,12 @@ export default function HomeScreen() {
         { id: Date.now(), text: message.trim(), isAgent: false },
       ]);
       setMessage('');
-      Keyboard.dismiss();
+      // On web, keep focus after sending
+      if (Platform.OS === 'web') {
+        inputRef.current?.focus();
+      } else {
+        Keyboard.dismiss();
+      }
     }
   };
 
@@ -62,55 +71,58 @@ export default function HomeScreen() {
   }, []);
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-    >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <View style={styles.container}>
-          {/* 3D Canvas */}
-          <View style={styles.canvasContainer}>
-            <ThreeCanvas
-              style={styles.canvas}
-              onContextCreate={handleContextCreate}
-            />
+    <View style={styles.container}>
+      {/* 3D Canvas */}
+      <View style={styles.canvasContainer}>
+        <ThreeCanvas
+          style={styles.canvas}
+          onContextCreate={handleContextCreate}
+        />
+      </View>
+
+      {/* Top Bar */}
+      <View style={styles.topBar}>
+        <View style={styles.profileSection}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>🤖</Text>
           </View>
-
-          {/* Top Bar */}
-          <View style={styles.topBar}>
-            <View style={styles.profileSection}>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>🤖</Text>
-              </View>
-              <View style={styles.healthBar}>
-                <View style={styles.healthFill} />
-              </View>
-              <TouchableOpacity 
-                style={styles.journalButton}
-                onPress={() => router.push('/journal')}
-              >
-                <Text style={styles.journalButtonText}>📔</Text>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.topRight}>
-              <TouchableOpacity 
-                style={styles.walletButton}
-                onPress={() => router.push('/wallet')}
-              >
-                <Text style={styles.walletText}>₿ 1,234</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={styles.logoutButton}
-                onPress={handleLogout}
-              >
-                <Text style={styles.logoutText}>🚪</Text>
-              </TouchableOpacity>
-            </View>
+          <View style={styles.healthBar}>
+            <View style={styles.healthFill} />
           </View>
+          <TouchableOpacity 
+            style={styles.journalButton}
+            onPress={() => router.push('/journal')}
+          >
+            <Text style={styles.journalButtonText}>📔</Text>
+          </TouchableOpacity>
+        </View>
 
-          {/* Chat Area */}
+        <View style={styles.topRight}>
+          <TouchableOpacity 
+            style={styles.walletButton}
+            onPress={() => router.push('/wallet')}
+          >
+            <Text style={styles.walletText}>₿ 1,234</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.logoutButton}
+            onPress={handleLogout}
+          >
+            <Text style={styles.logoutText}>🚪</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Spacer to push chat to bottom */}
+      <View style={styles.spacer} />
+
+      {/* Chat Container - Fixed to bottom third */}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        style={styles.chatWrapper}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View style={styles.chatContainer}>
             <ScrollView
               ref={scrollViewRef}
@@ -138,43 +150,42 @@ export default function HomeScreen() {
                 </View>
               ))}
             </ScrollView>
-          </View>
 
-          {/* Input Area */}
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              value={message}
-              onChangeText={setMessage}
-              placeholder="Type a message..."
-              placeholderTextColor={Colors.softGray}
-              multiline
-              blurOnSubmit={false}
-              returnKeyType="default"
-              enablesReturnKeyAutomatically
-            />
-            <TouchableOpacity 
-              style={[
-                styles.sendButton,
-                !message.trim() && styles.sendButtonDisabled
-              ]} 
-              onPress={handleSend}
-              disabled={!message.trim()}
-            >
-              <Ionicons 
-                name="send" 
-                size={24} 
-                color={message.trim() ? Colors.white : Colors.softGray} 
+            {/* Input Area */}
+            <View style={styles.inputContainer}>
+              <TextInput
+                ref={inputRef}
+                style={styles.input}
+                value={message}
+                onChangeText={setMessage}
+                placeholder="Type a message..."
+                placeholderTextColor={Colors.softGray}
+                multiline
+                blurOnSubmit={false}
+                returnKeyType="default"
+                enablesReturnKeyAutomatically
               />
-            </TouchableOpacity>
+              <TouchableOpacity 
+                style={[
+                  styles.sendButton,
+                  !message.trim() && styles.sendButtonDisabled
+                ]} 
+                onPress={handleSend}
+                disabled={!message.trim()}
+              >
+                <Ionicons 
+                  name="send" 
+                  size={24} 
+                  color={message.trim() ? Colors.white : Colors.softGray} 
+                />
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   container: {
@@ -281,18 +292,27 @@ const styles = StyleSheet.create({
   logoutText: {
     fontSize: 20,
   },
+  spacer: {
+    flex: 1,
+  },
+  chatWrapper: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: CHAT_HEIGHT,
+    zIndex: 1,
+  },
   chatContainer: {
     flex: 1,
-    marginTop: 10,
-    marginBottom: 5,
-    zIndex: 1,
+    backgroundColor: `${Colors.warmBeige}33`, // Very light background
   },
   messageScroll: {
     flex: 1,
   },
   messageScrollContent: {
     paddingHorizontal: 15,
-    paddingBottom: 10,
+    paddingVertical: 10,
   },
   message: {
     maxWidth: '80%',
@@ -329,7 +349,6 @@ const styles = StyleSheet.create({
     backgroundColor: `${Colors.warmBeige}F2`,
     borderTopWidth: 1,
     borderTopColor: Colors.softGray,
-    zIndex: 1,
     gap: 10,
   },
   input: {
@@ -337,14 +356,15 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
     borderRadius: 20,
     paddingHorizontal: 15,
-    paddingTop: 10,
-    paddingBottom: 10,
+    paddingTop: Platform.OS === 'ios' ? 10 : 8,
+    paddingBottom: Platform.OS === 'ios' ? 10 : 8,
     color: Colors.darkOrangeBrown,
     borderWidth: 1,
     borderColor: Colors.softGray,
     fontSize: 16,
     minHeight: 44,
     maxHeight: 100,
+    cursor: 'text', // Better cursor on web
   },
   sendButton: {
     width: 44,
