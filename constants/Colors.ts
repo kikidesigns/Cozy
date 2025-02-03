@@ -1,26 +1,55 @@
 /**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
+ * Cozy color scheme definition
  */
 
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
+// Base colors
+const colors = {
+  orangeBrown: '#C17F59',
+  darkOrangeBrown: '#A66B47',
+  skyBlue: '#89B9D0',
+  sageGreen: '#9CAF88',
+  warmBeige: '#F5E6D3',
+  lightBeige: '#FAF3EB',
+  softGray: '#E8E1D9',
+  white: '#FFFFFF',
+  black: '#11181C',
+  darkGray: '#687076',
+};
+
+// Functional color aliases
+const shared = {
+  primary: colors.orangeBrown,
+  secondary: colors.skyBlue,
+  success: colors.sageGreen,
+  error: '#FF4D4D',
+  warning: '#FFB84D',
+};
 
 export const Colors = {
   light: {
-    text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
+    ...shared,
+    text: colors.black,
+    textSecondary: colors.darkOrangeBrown,
+    background: colors.warmBeige,
+    backgroundAlt: colors.lightBeige,
+    surface: colors.white,
+    border: colors.softGray,
+    tint: colors.orangeBrown,
+    icon: colors.darkGray,
+    tabIconDefault: colors.softGray,
+    tabIconSelected: colors.orangeBrown,
   },
   dark: {
-    text: '#ECEDEE',
+    ...shared,
+    text: colors.white,
+    textSecondary: colors.softGray,
     background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
+    backgroundAlt: '#1A1D1E',
+    surface: '#202425',
+    border: '#2E3132',
+    tint: colors.orangeBrown,
+    icon: colors.softGray,
+    tabIconDefault: colors.softGray,
+    tabIconSelected: colors.orangeBrown,
   },
 };
