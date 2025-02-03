@@ -6,6 +6,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
 import { Colors } from '@/constants/Colors';
+import { NativeStackNavigationOptions } from '@react-navigation/native-stack';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 
@@ -37,7 +38,7 @@ const CozyDarkTheme = {
   },
 };
 
-const screenOptions = {
+const screenOptions: NativeStackNavigationOptions = {
   headerStyle: {
     backgroundColor: Colors.orangeBrown,
   },
