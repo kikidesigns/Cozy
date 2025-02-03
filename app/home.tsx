@@ -6,6 +6,7 @@ import { AgentPawn } from '../components/3d/AgentPawn';
 import { Environment } from '../components/3d/Environment';
 import { Lighting } from '../components/3d/Lighting';
 import { Scene } from 'three';
+import { Colors } from '../constants/Colors';
 
 export default function HomeScreen() {
   const [message, setMessage] = useState('');
@@ -95,7 +96,14 @@ export default function HomeScreen() {
               msg.isAgent ? styles.agentMessage : styles.userMessage,
             ]}
           >
-            <Text style={styles.messageText}>{msg.text}</Text>
+            <Text 
+              style={[
+                styles.messageText,
+                msg.isAgent ? styles.agentMessageText : styles.userMessageText,
+              ]}
+            >
+              {msg.text}
+            </Text>
           </View>
         ))}
       </View>
@@ -107,7 +115,7 @@ export default function HomeScreen() {
           value={message}
           onChangeText={setMessage}
           placeholder="Type a message..."
-          placeholderTextColor="#666"
+          placeholderTextColor={Colors.softGray}
           multiline
         />
         <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
@@ -123,7 +131,7 @@ const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: Colors.skyBlue,
   },
   canvasContainer: {
     position: 'absolute',
@@ -143,7 +151,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 10,
     paddingTop: 50,
-    backgroundColor: 'rgba(42, 42, 42, 0.8)',
+    backgroundColor: `${Colors.warmBeige}CC`, // CC = 80% opacity
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.softGray,
     zIndex: 1,
   },
   profileSection: {
@@ -154,9 +164,11 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#4ECDC4',
+    backgroundColor: Colors.orangeBrown,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 2,
+    borderColor: Colors.white,
   },
   avatarText: {
     fontSize: 20,
@@ -164,24 +176,28 @@ const styles = StyleSheet.create({
   healthBar: {
     width: 100,
     height: 10,
-    backgroundColor: '#444',
+    backgroundColor: Colors.softGray,
     borderRadius: 5,
     marginLeft: 10,
+    borderWidth: 1,
+    borderColor: Colors.white,
   },
   healthFill: {
     width: '80%',
     height: '100%',
-    backgroundColor: '#4ECDC4',
+    backgroundColor: Colors.sageGreen,
     borderRadius: 5,
   },
   journalButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#333',
+    backgroundColor: Colors.orangeBrown,
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 10,
+    borderWidth: 2,
+    borderColor: Colors.white,
   },
   journalButtonText: {
     fontSize: 20,
@@ -189,25 +205,30 @@ const styles = StyleSheet.create({
   topRight: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 10,
   },
   walletButton: {
-    backgroundColor: '#333',
+    backgroundColor: Colors.orangeBrown,
     paddingHorizontal: 15,
     paddingVertical: 8,
     borderRadius: 20,
-    marginRight: 10,
+    borderWidth: 2,
+    borderColor: Colors.white,
   },
   walletText: {
-    color: '#fff',
+    color: Colors.white,
     fontSize: 16,
+    fontWeight: '600',
   },
   logoutButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#333',
+    backgroundColor: Colors.orangeBrown,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 2,
+    borderColor: Colors.white,
   },
   logoutText: {
     fontSize: 20,
@@ -224,38 +245,52 @@ const styles = StyleSheet.create({
     marginVertical: 5,
   },
   agentMessage: {
-    backgroundColor: 'rgba(51, 51, 51, 0.9)',
+    backgroundColor: `${Colors.warmBeige}F2`, // F2 = 95% opacity
     alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderColor: Colors.softGray,
   },
   userMessage: {
-    backgroundColor: 'rgba(78, 205, 196, 0.9)',
+    backgroundColor: `${Colors.orangeBrown}F2`, // F2 = 95% opacity
     alignSelf: 'flex-end',
   },
   messageText: {
-    color: '#fff',
+    fontSize: 16,
+  },
+  agentMessageText: {
+    color: Colors.darkOrangeBrown,
+  },
+  userMessageText: {
+    color: Colors.white,
   },
   inputContainer: {
     flexDirection: 'row',
     padding: 10,
-    backgroundColor: 'rgba(42, 42, 42, 0.8)',
+    backgroundColor: `${Colors.warmBeige}CC`, // CC = 80% opacity
+    borderTopWidth: 1,
+    borderTopColor: Colors.softGray,
     zIndex: 1,
+    gap: 10,
   },
   input: {
     flex: 1,
-    backgroundColor: 'rgba(51, 51, 51, 0.9)',
+    backgroundColor: Colors.white,
     borderRadius: 20,
     paddingHorizontal: 15,
     paddingVertical: 10,
-    color: '#fff',
-    marginRight: 10,
+    color: Colors.darkOrangeBrown,
+    borderWidth: 1,
+    borderColor: Colors.softGray,
   },
   sendButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#4ECDC4',
+    backgroundColor: Colors.orangeBrown,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 2,
+    borderColor: Colors.white,
   },
   sendButtonText: {
     fontSize: 20,
