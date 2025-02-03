@@ -57,9 +57,7 @@ export default function HomeScreen() {
 
   const scrollToBottom = useCallback(() => {
     if (scrollViewRef.current) {
-      setTimeout(() => {
-        scrollViewRef.current?.scrollToEnd({ animated: true });
-      }, 100);
+      scrollViewRef.current.scrollToEnd({ animated: true });
     }
   }, []);
 
@@ -346,6 +344,7 @@ const styles = StyleSheet.create({
     borderColor: Colors.softGray,
     fontSize: 16,
     minHeight: 44,
+    maxHeight: 100,
   },
   sendButton: {
     width: 44,
