@@ -1,7 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import React from 'react';
-import { View, Text, TouchableOpacity, TextInput, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
-import { globalStyles } from '../../constants/styles';
+import { View, Text, TouchableOpacity, TextInput, StyleSheet, ScrollView } from 'react-native';
 import { Colors } from '../../constants/Colors';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 
@@ -55,128 +54,91 @@ export default function TaskScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.container}>
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity 
-            style={styles.backButton}
-            onPress={() => router.back()}
-          >
-            <FontAwesome name="arrow-left" size={20} color={Colors.white} />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Task Details</Text>
-          <View style={styles.backButton} /> {/* Placeholder for symmetry */}
-        </View>
-
-        <ScrollView style={styles.scrollView}>
-          {/* Task Title Section */}
-          <View style={styles.titleSection}>
-            <Text style={styles.title}>{task.title}</Text>
-            <View style={[styles.statusBadge, { backgroundColor: getStatusColor(task.status) }]}>
-              <FontAwesome 
-                name={getStatusIcon(task.status)} 
-                size={14} 
-                color={Colors.white}
-                style={styles.statusIcon}
-              />
-              <Text style={styles.statusText}>
-                {task.status.charAt(0).toUpperCase() + task.status.slice(1)}
-              </Text>
-            </View>
-          </View>
-          
-          {/* Task Details Card */}
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Description</Text>
-            <Text style={styles.description}>{task.description}</Text>
-            <View style={styles.metaInfo}>
-              <View style={styles.metaItem}>
-                <FontAwesome name="calendar" size={14} color={Colors.softGray} />
-                <Text style={styles.metaText}>{task.date}</Text>
-              </View>
-              {task.priority && (
-                <View style={styles.metaItem}>
-                  <FontAwesome name="flag" size={14} color={Colors.softGray} />
-                  <Text style={styles.metaText}>
-                    {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)} Priority
-                  </Text>
-                </View>
-              )}
-            </View>
-          </View>
-
-          {/* Comment Section */}
-          <View style={styles.commentSection}>
-            <Text style={styles.sectionTitle}>Add Comment</Text>
-            <TextInput
-              style={styles.commentInput}
-              multiline
-              placeholder="Enter your comment..."
-              placeholderTextColor={Colors.softGray}
-              value={comment}
-              onChangeText={setComment}
+    <View style={styles.container}>
+      <ScrollView style={styles.scrollView}>
+        {/* Task Title Section */}
+        <View style={styles.titleSection}>
+          <Text style={styles.title}>{task.title}</Text>
+          <View style={[styles.statusBadge, { backgroundColor: getStatusColor(task.status) }]}>
+            <FontAwesome 
+              name={getStatusIcon(task.status)} 
+              size={14} 
+              color={Colors.white}
+              style={styles.statusIcon}
             />
+            <Text style={styles.statusText}>
+              {task.status.charAt(0).toUpperCase() + task.status.slice(1)}
+            </Text>
           </View>
-        </ScrollView>
-
-        {/* Action Buttons */}
-        <View style={styles.actionButtons}>
-          <TouchableOpacity 
-            style={[styles.actionButton, styles.denyButton]}
-            onPress={() => router.back()}
-          >
-            <FontAwesome name="times" size={18} color={Colors.white} />
-            <Text style={styles.actionButtonText}>Deny Task</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={[styles.actionButton, styles.completeButton]}
-            onPress={() => router.back()}
-          >
-            <FontAwesome name="check" size={18} color={Colors.white} />
-            <Text style={styles.actionButtonText}>Complete Task</Text>
-          </TouchableOpacity>
         </View>
+        
+        {/* Task Details Card */}
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Description</Text>
+          <Text style={styles.description}>{task.description}</Text>
+          <View style={styles.metaInfo}>
+            <View style={styles.metaItem}>
+              <FontAwesome name="calendar" size={14} color={Colors.softGray} />
+              <Text style={styles.metaText}>{task.date}</Text>
+            </View>
+            {task.priority && (
+              <View style={styles.metaItem}>
+                <FontAwesome name="flag" size={14} color={Colors.softGray} />
+                <Text style={styles.metaText}>
+                  {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)} Priority
+                </Text>
+              </View>
+            )}
+          </View>
+        </View>
+
+        {/* Comment Section */}
+        <View style={styles.commentSection}>
+          <Text style={styles.sectionTitle}>Add Comment</Text>
+          <TextInput
+            style={styles.commentInput}
+            multiline
+            placeholder="Enter your comment..."
+            placeholderTextColor={Colors.softGray}
+            value={comment}
+            onChangeText={setComment}
+          />
+        </View>
+      </ScrollView>
+
+      {/* Action Buttons */}
+      <View style={styles.actionButtons}>
+        <TouchableOpacity 
+          style={[styles.actionButton, styles.denyButton]}
+          onPress={() => router.back()}
+        >
+          <FontAwesome name="times" size={18} color={Colors.white} />
+          <Text style={styles.actionButtonText}>Deny Task</Text>
+        </TouchableOpacity>
+        
+        <TouchableOpacity 
+          style={[styles.actionButton, styles.completeButton]}
+          onPress={() => router.back()}
+        >
+          <FontAwesome name="check" size={18} color={Colors.white} />
+          <Text style={styles.actionButtonText}>Complete Task</Text>
+        </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: Colors.orangeBrown,
-  },
   container: {
     flex: 1,
     backgroundColor: Colors.warmBeige,
-  },
-  header: {
-    backgroundColor: Colors.orangeBrown,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
-    paddingTop: 8,
-  },
-  headerTitle: {
-    color: Colors.white,
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   scrollView: {
     flex: 1,
   },
   titleSection: {
     padding: 20,
-    paddingTop: 24,
+    paddingTop: 16,
   },
   title: {
     fontSize: 24,
