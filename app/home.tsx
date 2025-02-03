@@ -1,18 +1,21 @@
 import { router } from 'expo-router';
 import React, { useState, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Dimensions, ScrollView, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThreeCanvas } from '../components/3d/ThreeCanvas';
 import { AgentPawn } from '../components/3d/AgentPawn';
 import { Environment } from '../components/3d/Environment';
 import { Lighting } from '../components/3d/Lighting';
 import { Scene } from 'three';
 import { Colors } from '../constants/Colors';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function HomeScreen() {
   const [message, setMessage] = useState('');
   const [chatMessages, setChatMessages] = useState([
     { id: 1, text: 'Hello! How can I help you today?', isAgent: true },
   ]);
+  const scrollViewRef = useRef();
 
   const handleSend = () => {
     if (message.trim()) {
@@ -21,6 +24,7 @@ export default function HomeScreen() {
         { id: Date.now(), text: message, isAgent: false },
       ]);
       setMessage('');
+      Keyboard.dismiss();
     }
   };
 
@@ -87,41 +91,61 @@ export default function HomeScreen() {
       </View>
 
       {/* Chat Area */}
-      <View style={styles.chatContainer}>
-        {chatMessages.map((msg) => (
-          <View
-            key={msg.id}
-            style={[
-              styles.message,
-              msg.isAgent ? styles.agentMessage : styles.userMessage,
-            ]}
-          >
-            <Text 
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.chatContainer}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+      >
+        <ScrollView
+          ref={scrollViewRef}
+          onContentSizeChange={() => scrollViewRef.current.scrollToEnd({ animated: true })}
+          style={styles.chatScroll}
+          contentContainerStyle={styles.chatScrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {chatMessages.map((msg) => (
+            <View
+              key={msg.id}
               style={[
-                styles.messageText,
-                msg.isAgent ? styles.agentMessageText : styles.userMessageText,
+                styles.message,
+                msg.isAgent ? styles.agentMessage : styles.userMessage,
               ]}
             >
-              {msg.text}
-            </Text>
-          </View>
-        ))}
-      </View>
+              <Text 
+                style={[
+                  styles.messageText,
+                  msg.isAgent ? styles.agentMessageText : styles.userMessageText,
+                ]}
+              >
+                {msg.text}
+              </Text>
+            </View>
+          ))}
+        </ScrollView>
 
-      {/* Input Area */}
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          value={message}
-          onChangeText={setMessage}
-          placeholder="Type a message..."
-          placeholderTextColor={Colors.softGray}
-          multiline
-        />
-        <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
-          <Text style={styles.sendButtonText}>📤</Text>
-        </TouchableOpacity>
-      </View>
+        <SafeAreaView 
+          edges={['bottom']} 
+          style={styles.safeArea}
+        >
+          {/* Input Area */}
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.input}
+              value={message}
+              onChangeText={setMessage}
+              placeholder="Type a message..."
+              placeholderTextColor={Colors.softGray}
+              multiline
+              blurOnSubmit={true}
+              returnKeyType="send"
+              onSubmitEditing={handleSend}
+            />
+            <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
+              <Text style={styles.sendButtonText}>📤</Text>
+            </TouchableOpacity>
+          </View>
+        </SafeAreaView>
+      </KeyboardAvoidingView>
     </View>
   );
 }
@@ -234,9 +258,23 @@ const styles = StyleSheet.create({
     fontSize: 20,
   },
   chatContainer: {
-    flex: 1,
-    padding: 10,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: SCREEN_HEIGHT / 3,
+    backgroundColor: 'transparent',
     zIndex: 1,
+  },
+  chatScroll: {
+    flex: 1,
+    width: '100%',
+  },
+  chatScrollContent: {
+    flexGrow: 1,
+    paddingTop: 20,
+    paddingHorizontal: 10,
+    paddingBottom: 10,
   },
   message: {
     maxWidth: '80%',
@@ -263,6 +301,9 @@ const styles = StyleSheet.create({
   userMessageText: {
     color: Colors.white,
   },
+  safeArea: {
+    backgroundColor: `${Colors.warmBeige}CC`, // Same as input container
+  },
   inputContainer: {
     flexDirection: 'row',
     padding: 10,
@@ -281,6 +322,7 @@ const styles = StyleSheet.create({
     color: Colors.darkOrangeBrown,
     borderWidth: 1,
     borderColor: Colors.softGray,
+    maxHeight: 100,
   },
   sendButton: {
     width: 44,
