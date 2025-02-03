@@ -48,87 +48,85 @@ export default function HomeScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['bottom']}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.keyboardView}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
-      >
-        {/* 3D Canvas */}
-        <View style={styles.canvasContainer}>
-          <ThreeCanvas
-            style={styles.canvas}
-            onContextCreate={handleContextCreate}
-          />
-        </View>
+    <View style={styles.container}>
+      {/* 3D Canvas */}
+      <View style={styles.canvasContainer}>
+        <ThreeCanvas
+          style={styles.canvas}
+          onContextCreate={handleContextCreate}
+        />
+      </View>
 
-        {/* Top Bar */}
-        <View style={styles.topBar}>
-          <View style={styles.profileSection}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>🤖</Text>
-            </View>
-            <View style={styles.healthBar}>
-              <View style={styles.healthFill} />
-            </View>
-            <TouchableOpacity 
-              style={styles.journalButton}
-              onPress={() => router.push('/journal')}
-            >
-              <Text style={styles.journalButtonText}>📔</Text>
-            </TouchableOpacity>
+      {/* Top Bar */}
+      <View style={styles.topBar}>
+        <View style={styles.profileSection}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>🤖</Text>
           </View>
-
-          <View style={styles.topRight}>
-            <TouchableOpacity 
-              style={styles.walletButton}
-              onPress={() => router.push('/wallet')}
-            >
-              <Text style={styles.walletText}>₿ 1,234</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={styles.logoutButton}
-              onPress={handleLogout}
-            >
-              <Text style={styles.logoutText}>🚪</Text>
-            </TouchableOpacity>
+          <View style={styles.healthBar}>
+            <View style={styles.healthFill} />
           </View>
-        </View>
-
-        {/* Chat Area */}
-        <View style={styles.chatContainer}>
-          <LinearGradient
-            colors={['rgba(255,255,255,0)', 'rgba(255,255,255,0.1)', 'rgba(255,255,255,0.2)']}
-            style={styles.fadeGradient}
-            pointerEvents="none"
-          />
-          <ScrollView
-            ref={scrollViewRef}
-            onContentSizeChange={() => scrollViewRef.current.scrollToEnd({ animated: true })}
-            style={styles.chatScroll}
-            contentContainerStyle={styles.chatScrollContent}
-            showsVerticalScrollIndicator={false}
+          <TouchableOpacity 
+            style={styles.journalButton}
+            onPress={() => router.push('/journal')}
           >
-            {chatMessages.map((msg) => (
-              <View
-                key={msg.id}
+            <Text style={styles.journalButtonText}>📔</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.topRight}>
+          <TouchableOpacity 
+            style={styles.walletButton}
+            onPress={() => router.push('/wallet')}
+          >
+            <Text style={styles.walletText}>₿ 1,234</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.logoutButton}
+            onPress={handleLogout}
+          >
+            <Text style={styles.logoutText}>🚪</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Chat Area */}
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.chatContainer}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+      >
+        <ScrollView
+          ref={scrollViewRef}
+          onContentSizeChange={() => scrollViewRef.current.scrollToEnd({ animated: true })}
+          style={styles.chatScroll}
+          contentContainerStyle={styles.chatScrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {chatMessages.map((msg) => (
+            <View
+              key={msg.id}
+              style={[
+                styles.message,
+                msg.isAgent ? styles.agentMessage : styles.userMessage,
+              ]}
+            >
+              <Text 
                 style={[
-                  styles.message,
-                  msg.isAgent ? styles.agentMessage : styles.userMessage,
+                  styles.messageText,
+                  msg.isAgent ? styles.agentMessageText : styles.userMessageText,
                 ]}
               >
-                <Text 
-                  style={[
-                    styles.messageText,
-                    msg.isAgent ? styles.agentMessageText : styles.userMessageText,
-                  ]}
-                >
-                  {msg.text}
-                </Text>
-              </View>
-            ))}
-          </ScrollView>
+                {msg.text}
+              </Text>
+            </View>
+          ))}
+        </ScrollView>
 
+        <SafeAreaView 
+          edges={['bottom']} 
+          style={styles.safeArea}
+        >
           {/* Input Area */}
           <View style={styles.inputContainer}>
             <TextInput
@@ -146,9 +144,9 @@ export default function HomeScreen() {
               <Text style={styles.sendButtonText}>📤</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </SafeAreaView>
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -158,9 +156,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.skyBlue,
-  },
-  keyboardView: {
-    flex: 1,
   },
   canvasContainer: {
     position: 'absolute',
@@ -271,14 +266,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     zIndex: 1,
   },
-  fadeGradient: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 60,
-    zIndex: 2,
-  },
   chatScroll: {
     flex: 1,
     width: '100%',
@@ -313,6 +300,9 @@ const styles = StyleSheet.create({
   },
   userMessageText: {
     color: Colors.white,
+  },
+  safeArea: {
+    backgroundColor: `${Colors.warmBeige}CC`, // Same as input container
   },
   inputContainer: {
     flexDirection: 'row',
