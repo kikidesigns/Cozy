@@ -9,13 +9,10 @@ const AGENT_COLORS = [
   Colors.orangeBrown,
   Colors.skyBlue,
   Colors.sageGreen,
-  Colors.warmBeige,
   Colors.darkOrangeBrown,
+  Colors.warmBeige,
   Colors.lightBeige,
 ];
-
-// Cozy yellow for selection highlight
-const SELECTION_COLOR = '#FFD700';
 
 export default function WelcomeScreen() {
   const [npub, setNpub] = useState('');
@@ -110,7 +107,7 @@ export default function WelcomeScreen() {
             style={[globalStyles.button, styles.button, styles.loginButton]}
             onPress={handleLogin}
           >
-            <Text style={globalStyles.buttonText}>Login</Text>
+            <Text style={[globalStyles.buttonText, styles.loginButtonText]}>Login</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -132,6 +129,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 32,
+    fontWeight: '600',
     color: Colors.darkOrangeBrown,
     textAlign: 'center',
     marginBottom: 30,
@@ -143,6 +141,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 30,
+    borderWidth: 4,
+    borderColor: Colors.white,
     shadowColor: Colors.shadow,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -160,6 +160,9 @@ const styles = StyleSheet.create({
   input: {
     backgroundColor: Colors.white,
     marginBottom: 15,
+    borderWidth: 1,
+    borderColor: Colors.softGray,
+    color: Colors.darkOrangeBrown,
     shadowColor: Colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -173,7 +176,8 @@ const styles = StyleSheet.create({
   },
   colorTitle: {
     fontSize: 16,
-    color: Colors.text,
+    fontWeight: '600',
+    color: Colors.darkOrangeBrown,
     marginBottom: 10,
     textAlign: 'center',
   },
@@ -181,12 +185,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
+    gap: 16,
   },
   colorOptionWrapper: {
     width: 52,
     height: 52,
     borderRadius: 26,
-    margin: 8,
     padding: 4,
     backgroundColor: Colors.white,
     justifyContent: 'center',
@@ -198,7 +202,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   selectedWrapper: {
-    backgroundColor: SELECTION_COLOR,
+    backgroundColor: Colors.orangeBrown,
     transform: [{ scale: 1.1 }],
   },
   colorOption: {
@@ -213,10 +217,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     width: '100%',
     paddingHorizontal: 20,
+    gap: 16,
   },
   button: {
     flex: 1,
-    marginHorizontal: 10,
+    height: 48,
+    borderRadius: 24,
     shadowColor: Colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
@@ -225,11 +231,18 @@ const styles = StyleSheet.create({
   },
   resetButton: {
     backgroundColor: Colors.white,
+    borderWidth: 1,
+    borderColor: Colors.softGray,
   },
   resetButtonText: {
-    color: Colors.text,
+    color: Colors.darkOrangeBrown,
+    fontWeight: '600',
   },
   loginButton: {
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.orangeBrown,
+  },
+  loginButtonText: {
+    color: Colors.white,
+    fontWeight: '600',
   },
 });
