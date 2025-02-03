@@ -26,7 +26,7 @@ export default function HomeScreen() {
   const [chatMessages, setChatMessages] = useState([
     { id: 1, text: 'Hello! How can I help you today?', isAgent: true },
   ]);
-  const scrollViewRef = useRef(null);
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const handleSend = () => {
     if (message.trim()) {
@@ -57,7 +57,9 @@ export default function HomeScreen() {
 
   const scrollToBottom = useCallback(() => {
     if (scrollViewRef.current) {
-      scrollViewRef.current.scrollToEnd({ animated: true });
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
     }
   }, []);
 
@@ -149,7 +151,6 @@ export default function HomeScreen() {
               placeholder="Type a message..."
               placeholderTextColor={Colors.softGray}
               multiline
-              maxHeight={100}
               blurOnSubmit={false}
               returnKeyType="default"
               enablesReturnKeyAutomatically
@@ -344,7 +345,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.softGray,
     fontSize: 16,
-    maxHeight: 100,
+    minHeight: 44,
   },
   sendButton: {
     width: 44,
