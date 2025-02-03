@@ -1,30 +1,52 @@
 import { router } from 'expo-router';
-import React, { useState, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Dimensions, ScrollView, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import React, { useState, useRef, useCallback } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Dimensions,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
+  ScrollView,
+  Pressable,
+} from 'react-native';
 import { ThreeCanvas } from '../components/3d/ThreeCanvas';
 import { AgentPawn } from '../components/3d/AgentPawn';
 import { Environment } from '../components/3d/Environment';
 import { Lighting } from '../components/3d/Lighting';
 import { Scene } from 'three';
 import { Colors } from '../constants/Colors';
-import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const CHAT_HEIGHT = SCREEN_HEIGHT / 3;
 
 export default function HomeScreen() {
   const [message, setMessage] = useState('');
   const [chatMessages, setChatMessages] = useState([
     { id: 1, text: 'Hello! How can I help you today?', isAgent: true },
   ]);
-  const scrollViewRef = useRef();
+  const scrollViewRef = useRef<ScrollView>(null);
+  const inputRef = useRef<TextInput>(null);
+  const insets = useSafeAreaInsets();
 
   const handleSend = () => {
     if (message.trim()) {
       setChatMessages([
         ...chatMessages,
-        { id: Date.now(), text: message, isAgent: false },
+        { id: Date.now(), text: message.trim(), isAgent: false },
       ]);
       setMessage('');
-      Keyboard.dismiss();
+      // On web, keep focus after sending
+      if (Platform.OS === 'web') {
+        inputRef.current?.focus();
+      } else {
+        Keyboard.dismiss();
+      }
     }
   };
 
@@ -33,32 +55,41 @@ export default function HomeScreen() {
   };
 
   const handleContextCreate = (gl: WebGLRenderingContext, scene: Scene) => {
-    // Add environment (platform and sun)
     const environment = new Environment();
     scene.add(environment);
 
-    // Add lighting
     const lighting = new Lighting();
     scene.add(lighting);
 
-    // Add agent pawn
     const pawn = new AgentPawn();
-    pawn.position.y = 1; // Lift pawn above platform
+    pawn.position.y = 1;
     scene.add(pawn);
+  };
+
+  const scrollToBottom = useCallback(() => {
+    if (scrollViewRef.current) {
+      scrollViewRef.current.scrollToEnd({ animated: true });
+    }
+  }, []);
+
+  const handleMainPress = () => {
+    if (Platform.OS !== 'web') {
+      Keyboard.dismiss();
+    }
   };
 
   return (
     <View style={styles.container}>
-      {/* 3D Canvas */}
-      <View style={styles.canvasContainer}>
+      {/* 3D Canvas with press handler */}
+      <Pressable style={styles.canvasContainer} onPress={handleMainPress}>
         <ThreeCanvas
           style={styles.canvas}
           onContextCreate={handleContextCreate}
         />
-      </View>
+      </Pressable>
 
       {/* Top Bar */}
-      <View style={styles.topBar}>
+      <View style={[styles.topBar, { paddingTop: insets.top || 50 }]}>
         <View style={styles.profileSection}>
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>🤖</Text>
@@ -90,67 +121,80 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {/* Chat Area */}
-      <KeyboardAvoidingView 
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={styles.chatContainer}
-        keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 0}
+      {/* Spacer to push chat to bottom */}
+      <View style={styles.spacer} />
+
+      {/* Chat Container - Fixed to bottom third */}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+        style={styles.chatWrapper}
       >
-        <ScrollView
-          ref={scrollViewRef}
-          onContentSizeChange={() => scrollViewRef.current.scrollToEnd({ animated: true })}
-          style={styles.chatScroll}
-          contentContainerStyle={styles.chatScrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          {chatMessages.map((msg) => (
-            <View
-              key={msg.id}
-              style={[
-                styles.message,
-                msg.isAgent ? styles.agentMessage : styles.userMessage,
-              ]}
-            >
-              <Text 
+        <View style={styles.chatContainer}>
+          <ScrollView
+            ref={scrollViewRef}
+            style={styles.messageScroll}
+            contentContainerStyle={styles.messageScrollContent}
+            onContentSizeChange={scrollToBottom}
+            showsVerticalScrollIndicator={false}
+          >
+            {chatMessages.map((msg) => (
+              <View
+                key={msg.id}
                 style={[
-                  styles.messageText,
-                  msg.isAgent ? styles.agentMessageText : styles.userMessageText,
+                  styles.message,
+                  msg.isAgent ? styles.agentMessage : styles.userMessage,
                 ]}
               >
-                {msg.text}
-              </Text>
-            </View>
-          ))}
-        </ScrollView>
+                <Text 
+                  style={[
+                    styles.messageText,
+                    msg.isAgent ? styles.agentMessageText : styles.userMessageText,
+                  ]}
+                >
+                  {msg.text}
+                </Text>
+              </View>
+            ))}
+          </ScrollView>
 
-        <SafeAreaView 
-          edges={['bottom']} 
-          style={styles.safeArea}
-        >
           {/* Input Area */}
-          <View style={styles.inputContainer}>
+          <View style={[
+            styles.inputContainer,
+            { paddingBottom: Math.max(insets.bottom, 10) }
+          ]}>
             <TextInput
+              ref={inputRef}
               style={styles.input}
               value={message}
               onChangeText={setMessage}
               placeholder="Type a message..."
               placeholderTextColor={Colors.softGray}
               multiline
-              blurOnSubmit={true}
-              returnKeyType="send"
-              onSubmitEditing={handleSend}
+              blurOnSubmit={false}
+              returnKeyType="default"
+              enablesReturnKeyAutomatically
             />
-            <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
-              <Text style={styles.sendButtonText}>📤</Text>
+            <TouchableOpacity 
+              style={[
+                styles.sendButton,
+                !message.trim() && styles.sendButtonDisabled
+              ]} 
+              onPress={handleSend}
+              disabled={!message.trim()}
+            >
+              <Ionicons 
+                name="send" 
+                size={24} 
+                color={message.trim() ? Colors.white : Colors.softGray} 
+              />
             </TouchableOpacity>
           </View>
-        </SafeAreaView>
+        </View>
       </KeyboardAvoidingView>
     </View>
   );
 }
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 const styles = StyleSheet.create({
   container: {
@@ -174,8 +218,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 10,
-    paddingTop: 50,
-    backgroundColor: `${Colors.warmBeige}CC`, // CC = 80% opacity
+    backgroundColor: `${Colors.warmBeige}CC`,
     borderBottomWidth: 1,
     borderBottomColor: Colors.softGray,
     zIndex: 1,
@@ -257,43 +300,49 @@ const styles = StyleSheet.create({
   logoutText: {
     fontSize: 20,
   },
-  chatContainer: {
+  spacer: {
+    flex: 1,
+  },
+  chatWrapper: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    height: SCREEN_HEIGHT / 3,
-    backgroundColor: 'transparent',
+    height: CHAT_HEIGHT,
     zIndex: 1,
   },
-  chatScroll: {
+  chatContainer: {
     flex: 1,
-    width: '100%',
+    backgroundColor: `${Colors.warmBeige}F2`,
   },
-  chatScrollContent: {
-    flexGrow: 1,
-    paddingTop: 20,
-    paddingHorizontal: 10,
-    paddingBottom: 10,
+  messageScroll: {
+    flex: 1,
+  },
+  messageScrollContent: {
+    paddingHorizontal: 15,
+    paddingVertical: 10,
   },
   message: {
     maxWidth: '80%',
-    padding: 10,
-    borderRadius: 10,
-    marginVertical: 5,
+    padding: 12,
+    borderRadius: 16,
+    marginVertical: 4,
   },
   agentMessage: {
-    backgroundColor: `${Colors.warmBeige}F2`, // F2 = 95% opacity
+    backgroundColor: `${Colors.warmBeige}F2`,
     alignSelf: 'flex-start',
     borderWidth: 1,
     borderColor: Colors.softGray,
+    borderBottomLeftRadius: 4,
   },
   userMessage: {
-    backgroundColor: `${Colors.orangeBrown}F2`, // F2 = 95% opacity
-    alignSelf: 'flex-end',
+    backgroundColor: `${Colors.orangeBrown}F2`,
+    alignSelf: 'flex-start',
+    borderBottomLeftRadius: 4,
   },
   messageText: {
     fontSize: 16,
+    lineHeight: 22,
   },
   agentMessageText: {
     color: Colors.darkOrangeBrown,
@@ -301,16 +350,12 @@ const styles = StyleSheet.create({
   userMessageText: {
     color: Colors.white,
   },
-  safeArea: {
-    backgroundColor: `${Colors.warmBeige}CC`, // Same as input container
-  },
   inputContainer: {
     flexDirection: 'row',
     padding: 10,
-    backgroundColor: `${Colors.warmBeige}CC`, // CC = 80% opacity
+    backgroundColor: `${Colors.warmBeige}F2`,
     borderTopWidth: 1,
     borderTopColor: Colors.softGray,
-    zIndex: 1,
     gap: 10,
   },
   input: {
@@ -318,11 +363,15 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
     borderRadius: 20,
     paddingHorizontal: 15,
-    paddingVertical: 10,
+    paddingTop: Platform.OS === 'ios' ? 10 : 8,
+    paddingBottom: Platform.OS === 'ios' ? 10 : 8,
     color: Colors.darkOrangeBrown,
     borderWidth: 1,
     borderColor: Colors.softGray,
+    fontSize: 16,
+    minHeight: 44,
     maxHeight: 100,
+    cursor: 'text',
   },
   sendButton: {
     width: 44,
@@ -334,7 +383,8 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: Colors.white,
   },
-  sendButtonText: {
-    fontSize: 20,
+  sendButtonDisabled: {
+    backgroundColor: Colors.softGray,
+    borderColor: Colors.softGray,
   },
 });
