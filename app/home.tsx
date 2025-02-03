@@ -1,26 +1,41 @@
 import { router } from 'expo-router';
-import React, { useState, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import React, { useState, useRef, useCallback } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Dimensions,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
+  ScrollView,
+  TouchableWithoutFeedback,
+} from 'react-native';
 import { ThreeCanvas } from '../components/3d/ThreeCanvas';
 import { AgentPawn } from '../components/3d/AgentPawn';
 import { Environment } from '../components/3d/Environment';
 import { Lighting } from '../components/3d/Lighting';
 import { Scene } from 'three';
 import { Colors } from '../constants/Colors';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function HomeScreen() {
   const [message, setMessage] = useState('');
   const [chatMessages, setChatMessages] = useState([
     { id: 1, text: 'Hello! How can I help you today?', isAgent: true },
   ]);
+  const scrollViewRef = useRef(null);
 
   const handleSend = () => {
     if (message.trim()) {
       setChatMessages([
         ...chatMessages,
-        { id: Date.now(), text: message, isAgent: false },
+        { id: Date.now(), text: message.trim(), isAgent: false },
       ]);
       setMessage('');
+      Keyboard.dismiss();
     }
   };
 
@@ -29,100 +44,134 @@ export default function HomeScreen() {
   };
 
   const handleContextCreate = (gl: WebGLRenderingContext, scene: Scene) => {
-    // Add environment (platform and sun)
     const environment = new Environment();
     scene.add(environment);
 
-    // Add lighting
     const lighting = new Lighting();
     scene.add(lighting);
 
-    // Add agent pawn
     const pawn = new AgentPawn();
-    pawn.position.y = 1; // Lift pawn above platform
+    pawn.position.y = 1;
     scene.add(pawn);
   };
 
+  const scrollToBottom = useCallback(() => {
+    if (scrollViewRef.current) {
+      scrollViewRef.current.scrollToEnd({ animated: true });
+    }
+  }, []);
+
   return (
-    <View style={styles.container}>
-      {/* 3D Canvas */}
-      <View style={styles.canvasContainer}>
-        <ThreeCanvas
-          style={styles.canvas}
-          onContextCreate={handleContextCreate}
-        />
-      </View>
-
-      {/* Top Bar */}
-      <View style={styles.topBar}>
-        <View style={styles.profileSection}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>🤖</Text>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.container}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+    >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View style={styles.container}>
+          {/* 3D Canvas */}
+          <View style={styles.canvasContainer}>
+            <ThreeCanvas
+              style={styles.canvas}
+              onContextCreate={handleContextCreate}
+            />
           </View>
-          <View style={styles.healthBar}>
-            <View style={styles.healthFill} />
+
+          {/* Top Bar */}
+          <View style={styles.topBar}>
+            <View style={styles.profileSection}>
+              <View style={styles.avatar}>
+                <Text style={styles.avatarText}>🤖</Text>
+              </View>
+              <View style={styles.healthBar}>
+                <View style={styles.healthFill} />
+              </View>
+              <TouchableOpacity 
+                style={styles.journalButton}
+                onPress={() => router.push('/journal')}
+              >
+                <Text style={styles.journalButtonText}>📔</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.topRight}>
+              <TouchableOpacity 
+                style={styles.walletButton}
+                onPress={() => router.push('/wallet')}
+              >
+                <Text style={styles.walletText}>₿ 1,234</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.logoutButton}
+                onPress={handleLogout}
+              >
+                <Text style={styles.logoutText}>🚪</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-          <TouchableOpacity 
-            style={styles.journalButton}
-            onPress={() => router.push('/journal')}
-          >
-            <Text style={styles.journalButtonText}>📔</Text>
-          </TouchableOpacity>
-        </View>
 
-        <View style={styles.topRight}>
-          <TouchableOpacity 
-            style={styles.walletButton}
-            onPress={() => router.push('/wallet')}
-          >
-            <Text style={styles.walletText}>₿ 1,234</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.logoutButton}
-            onPress={handleLogout}
-          >
-            <Text style={styles.logoutText}>🚪</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Chat Area */}
-      <View style={styles.chatContainer}>
-        {chatMessages.map((msg) => (
-          <View
-            key={msg.id}
-            style={[
-              styles.message,
-              msg.isAgent ? styles.agentMessage : styles.userMessage,
-            ]}
-          >
-            <Text 
-              style={[
-                styles.messageText,
-                msg.isAgent ? styles.agentMessageText : styles.userMessageText,
-              ]}
+          {/* Chat Area */}
+          <View style={styles.chatContainer}>
+            <ScrollView
+              ref={scrollViewRef}
+              style={styles.messageScroll}
+              contentContainerStyle={styles.messageScrollContent}
+              onContentSizeChange={scrollToBottom}
+              showsVerticalScrollIndicator={false}
             >
-              {msg.text}
-            </Text>
+              {chatMessages.map((msg) => (
+                <View
+                  key={msg.id}
+                  style={[
+                    styles.message,
+                    msg.isAgent ? styles.agentMessage : styles.userMessage,
+                  ]}
+                >
+                  <Text 
+                    style={[
+                      styles.messageText,
+                      msg.isAgent ? styles.agentMessageText : styles.userMessageText,
+                    ]}
+                  >
+                    {msg.text}
+                  </Text>
+                </View>
+              ))}
+            </ScrollView>
           </View>
-        ))}
-      </View>
 
-      {/* Input Area */}
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          value={message}
-          onChangeText={setMessage}
-          placeholder="Type a message..."
-          placeholderTextColor={Colors.softGray}
-          multiline
-        />
-        <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
-          <Text style={styles.sendButtonText}>📤</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+          {/* Input Area */}
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.input}
+              value={message}
+              onChangeText={setMessage}
+              placeholder="Type a message..."
+              placeholderTextColor={Colors.softGray}
+              multiline
+              maxHeight={100}
+              blurOnSubmit={false}
+              returnKeyType="default"
+              enablesReturnKeyAutomatically
+            />
+            <TouchableOpacity 
+              style={[
+                styles.sendButton,
+                !message.trim() && styles.sendButtonDisabled
+              ]} 
+              onPress={handleSend}
+              disabled={!message.trim()}
+            >
+              <Ionicons 
+                name="send" 
+                size={24} 
+                color={message.trim() ? Colors.white : Colors.softGray} 
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </TouchableWithoutFeedback>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -151,7 +200,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 10,
     paddingTop: 50,
-    backgroundColor: `${Colors.warmBeige}CC`, // CC = 80% opacity
+    backgroundColor: `${Colors.warmBeige}CC`,
     borderBottomWidth: 1,
     borderBottomColor: Colors.softGray,
     zIndex: 1,
@@ -235,27 +284,38 @@ const styles = StyleSheet.create({
   },
   chatContainer: {
     flex: 1,
-    padding: 10,
+    marginTop: 10,
+    marginBottom: 5,
     zIndex: 1,
+  },
+  messageScroll: {
+    flex: 1,
+  },
+  messageScrollContent: {
+    paddingHorizontal: 15,
+    paddingBottom: 10,
   },
   message: {
     maxWidth: '80%',
-    padding: 10,
-    borderRadius: 10,
-    marginVertical: 5,
+    padding: 12,
+    borderRadius: 16,
+    marginVertical: 4,
   },
   agentMessage: {
-    backgroundColor: `${Colors.warmBeige}F2`, // F2 = 95% opacity
+    backgroundColor: `${Colors.warmBeige}F2`,
     alignSelf: 'flex-start',
     borderWidth: 1,
     borderColor: Colors.softGray,
+    borderBottomLeftRadius: 4,
   },
   userMessage: {
-    backgroundColor: `${Colors.orangeBrown}F2`, // F2 = 95% opacity
-    alignSelf: 'flex-end',
+    backgroundColor: `${Colors.orangeBrown}F2`,
+    alignSelf: 'flex-start',
+    borderBottomLeftRadius: 4,
   },
   messageText: {
     fontSize: 16,
+    lineHeight: 22,
   },
   agentMessageText: {
     color: Colors.darkOrangeBrown,
@@ -266,7 +326,8 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     padding: 10,
-    backgroundColor: `${Colors.warmBeige}CC`, // CC = 80% opacity
+    paddingBottom: Platform.OS === 'ios' ? 25 : 10,
+    backgroundColor: `${Colors.warmBeige}F2`,
     borderTopWidth: 1,
     borderTopColor: Colors.softGray,
     zIndex: 1,
@@ -277,10 +338,13 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.white,
     borderRadius: 20,
     paddingHorizontal: 15,
-    paddingVertical: 10,
+    paddingTop: 10,
+    paddingBottom: 10,
     color: Colors.darkOrangeBrown,
     borderWidth: 1,
     borderColor: Colors.softGray,
+    fontSize: 16,
+    maxHeight: 100,
   },
   sendButton: {
     width: 44,
@@ -292,7 +356,8 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: Colors.white,
   },
-  sendButtonText: {
-    fontSize: 20,
+  sendButtonDisabled: {
+    backgroundColor: Colors.softGray,
+    borderColor: Colors.softGray,
   },
 });
