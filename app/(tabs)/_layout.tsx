@@ -1,7 +1,6 @@
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Link, Tabs } from 'expo-router';
 import { Pressable, useColorScheme } from 'react-native';
-
 import { Colors } from '../../constants/Colors';
 
 function TabBarIcon(props: {
@@ -17,13 +16,38 @@ export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+        // Use cozy orange as active color
+        tabBarActiveTintColor: Colors.orangeBrown,
+        tabBarInactiveTintColor: Colors.softGray,
+        tabBarStyle: {
+          backgroundColor: Colors.lightBeige,
+          borderTopColor: Colors.softGray,
+          borderTopWidth: 1,
+          elevation: 0,
+          shadowOpacity: 0,
+          height: 60,
+          paddingBottom: 8,
+          paddingTop: 8,
+        },
+        headerStyle: {
+          backgroundColor: Colors.orangeBrown,
+          elevation: 0,
+          shadowOpacity: 0,
+          borderBottomWidth: 0,
+        },
+        headerTintColor: Colors.white,
+        headerTitleStyle: {
+          fontWeight: '600',
+          fontSize: 18,
+        },
+        headerShadowVisible: false,
       }}>
       <Tabs.Screen
         name="index"
         options={{
           title: 'Home',
           tabBarIcon: ({ color }) => <TabBarIcon name="home" color={color} />,
+          headerShown: false, // Hide header for home screen as it has custom header
         }}
       />
       <Tabs.Screen
