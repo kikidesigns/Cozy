@@ -12,6 +12,7 @@ import {
   Keyboard,
   ScrollView,
   TouchableWithoutFeedback,
+  Pressable,
 } from 'react-native';
 import { ThreeCanvas } from '../components/3d/ThreeCanvas';
 import { AgentPawn } from '../components/3d/AgentPawn';
@@ -20,9 +21,10 @@ import { Lighting } from '../components/3d/Lighting';
 import { Scene } from 'three';
 import { Colors } from '../constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-const CHAT_HEIGHT = SCREEN_HEIGHT / 3; // One third of screen height
+const CHAT_HEIGHT = SCREEN_HEIGHT / 3;
 
 export default function HomeScreen() {
   const [message, setMessage] = useState('');
@@ -31,6 +33,7 @@ export default function HomeScreen() {
   ]);
   const scrollViewRef = useRef<ScrollView>(null);
   const inputRef = useRef<TextInput>(null);
+  const insets = useSafeAreaInsets();
 
   const handleSend = () => {
     if (message.trim()) {
@@ -70,18 +73,24 @@ export default function HomeScreen() {
     }
   }, []);
 
+  const handleMainPress = () => {
+    if (Platform.OS !== 'web') {
+      Keyboard.dismiss();
+    }
+  };
+
   return (
     <View style={styles.container}>
-      {/* 3D Canvas */}
-      <View style={styles.canvasContainer}>
+      {/* 3D Canvas with press handler */}
+      <Pressable style={styles.canvasContainer} onPress={handleMainPress}>
         <ThreeCanvas
           style={styles.canvas}
           onContextCreate={handleContextCreate}
         />
-      </View>
+      </Pressable>
 
       {/* Top Bar */}
-      <View style={styles.topBar}>
+      <View style={[styles.topBar, { paddingTop: insets.top || 50 }]}>
         <View style={styles.profileSection}>
           <View style={styles.avatar}>
             <Text style={styles.avatarText}>🤖</Text>
@@ -119,69 +128,70 @@ export default function HomeScreen() {
       {/* Chat Container - Fixed to bottom third */}
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
         style={styles.chatWrapper}
       >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View style={styles.chatContainer}>
-            <ScrollView
-              ref={scrollViewRef}
-              style={styles.messageScroll}
-              contentContainerStyle={styles.messageScrollContent}
-              onContentSizeChange={scrollToBottom}
-              showsVerticalScrollIndicator={false}
-            >
-              {chatMessages.map((msg) => (
-                <View
-                  key={msg.id}
+        <View style={styles.chatContainer}>
+          <ScrollView
+            ref={scrollViewRef}
+            style={styles.messageScroll}
+            contentContainerStyle={styles.messageScrollContent}
+            onContentSizeChange={scrollToBottom}
+            showsVerticalScrollIndicator={false}
+          >
+            {chatMessages.map((msg) => (
+              <View
+                key={msg.id}
+                style={[
+                  styles.message,
+                  msg.isAgent ? styles.agentMessage : styles.userMessage,
+                ]}
+              >
+                <Text 
                   style={[
-                    styles.message,
-                    msg.isAgent ? styles.agentMessage : styles.userMessage,
+                    styles.messageText,
+                    msg.isAgent ? styles.agentMessageText : styles.userMessageText,
                   ]}
                 >
-                  <Text 
-                    style={[
-                      styles.messageText,
-                      msg.isAgent ? styles.agentMessageText : styles.userMessageText,
-                    ]}
-                  >
-                    {msg.text}
-                  </Text>
-                </View>
-              ))}
-            </ScrollView>
+                  {msg.text}
+                </Text>
+              </View>
+            ))}
+          </ScrollView>
 
-            {/* Input Area */}
-            <View style={styles.inputContainer}>
-              <TextInput
-                ref={inputRef}
-                style={styles.input}
-                value={message}
-                onChangeText={setMessage}
-                placeholder="Type a message..."
-                placeholderTextColor={Colors.softGray}
-                multiline
-                blurOnSubmit={false}
-                returnKeyType="default"
-                enablesReturnKeyAutomatically
+          {/* Input Area */}
+          <View style={[
+            styles.inputContainer,
+            { paddingBottom: Math.max(insets.bottom, 10) }
+          ]}>
+            <TextInput
+              ref={inputRef}
+              style={styles.input}
+              value={message}
+              onChangeText={setMessage}
+              placeholder="Type a message..."
+              placeholderTextColor={Colors.softGray}
+              multiline
+              blurOnSubmit={false}
+              returnKeyType="default"
+              enablesReturnKeyAutomatically
+            />
+            <TouchableOpacity 
+              style={[
+                styles.sendButton,
+                !message.trim() && styles.sendButtonDisabled
+              ]} 
+              onPress={handleSend}
+              disabled={!message.trim()}
+            >
+              <Ionicons 
+                name="send" 
+                size={24} 
+                color={message.trim() ? Colors.white : Colors.softGray} 
               />
-              <TouchableOpacity 
-                style={[
-                  styles.sendButton,
-                  !message.trim() && styles.sendButtonDisabled
-                ]} 
-                onPress={handleSend}
-                disabled={!message.trim()}
-              >
-                <Ionicons 
-                  name="send" 
-                  size={24} 
-                  color={message.trim() ? Colors.white : Colors.softGray} 
-                />
-              </TouchableOpacity>
-            </View>
+            </TouchableOpacity>
           </View>
-        </TouchableWithoutFeedback>
+        </View>
       </KeyboardAvoidingView>
     </View>
   );
@@ -209,7 +219,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 10,
-    paddingTop: 50,
     backgroundColor: `${Colors.warmBeige}CC`,
     borderBottomWidth: 1,
     borderBottomColor: Colors.softGray,
@@ -305,7 +314,7 @@ const styles = StyleSheet.create({
   },
   chatContainer: {
     flex: 1,
-    backgroundColor: `${Colors.warmBeige}33`, // Very light background
+    backgroundColor: `${Colors.warmBeige}F2`,
   },
   messageScroll: {
     flex: 1,
@@ -345,7 +354,6 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     padding: 10,
-    paddingBottom: Platform.OS === 'ios' ? 25 : 10,
     backgroundColor: `${Colors.warmBeige}F2`,
     borderTopWidth: 1,
     borderTopColor: Colors.softGray,
@@ -364,7 +372,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     minHeight: 44,
     maxHeight: 100,
-    cursor: 'text', // Better cursor on web
+    cursor: 'text',
   },
   sendButton: {
     width: 44,
