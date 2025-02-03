@@ -9,12 +9,16 @@ interface ThreeCanvasProps {
   style?: any;
 }
 
+interface ExpoGLContext extends WebGLRenderingContext {
+  endFrameEXP?: () => void;
+}
+
 export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({ onContextCreate, style }) => {
   const sceneRef = useRef<Scene>(new Scene());
   const cameraRef = useRef<PerspectiveCamera>();
   const rendererRef = useRef<Renderer>();
 
-  const onGLContextCreate = async (gl: WebGLRenderingContext) => {
+  const onGLContextCreate = async (gl: ExpoGLContext) => {
     // Initialize renderer
     const renderer = new Renderer({ gl });
     renderer.setClearColor(0x000000, 1);
@@ -45,7 +49,7 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({ onContextCreate, style
     const render = () => {
       requestAnimationFrame(render);
       renderer.render(sceneRef.current, camera);
-      gl.endFrameEXP();
+      gl.endFrameEXP?.();
     };
     render();
   };
