@@ -1,6 +1,7 @@
 import { router } from 'expo-router';
 import React, { useState, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Dimensions, ScrollView, KeyboardAvoidingView, Platform, Keyboard } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThreeCanvas } from '../components/3d/ThreeCanvas';
 import { AgentPawn } from '../components/3d/AgentPawn';
 import { Environment } from '../components/3d/Environment';
@@ -47,105 +48,107 @@ export default function HomeScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
-      style={styles.container}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
-    >
-      {/* 3D Canvas */}
-      <View style={styles.canvasContainer}>
-        <ThreeCanvas
-          style={styles.canvas}
-          onContextCreate={handleContextCreate}
-        />
-      </View>
-
-      {/* Top Bar */}
-      <View style={styles.topBar}>
-        <View style={styles.profileSection}>
-          <View style={styles.avatar}>
-            <Text style={styles.avatarText}>🤖</Text>
-          </View>
-          <View style={styles.healthBar}>
-            <View style={styles.healthFill} />
-          </View>
-          <TouchableOpacity 
-            style={styles.journalButton}
-            onPress={() => router.push('/journal')}
-          >
-            <Text style={styles.journalButtonText}>📔</Text>
-          </TouchableOpacity>
+    <SafeAreaView style={styles.container} edges={['bottom']}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        style={styles.keyboardView}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
+      >
+        {/* 3D Canvas */}
+        <View style={styles.canvasContainer}>
+          <ThreeCanvas
+            style={styles.canvas}
+            onContextCreate={handleContextCreate}
+          />
         </View>
 
-        <View style={styles.topRight}>
-          <TouchableOpacity 
-            style={styles.walletButton}
-            onPress={() => router.push('/wallet')}
-          >
-            <Text style={styles.walletText}>₿ 1,234</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={styles.logoutButton}
-            onPress={handleLogout}
-          >
-            <Text style={styles.logoutText}>🚪</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      {/* Chat Area */}
-      <View style={styles.chatContainer}>
-        <LinearGradient
-          colors={['transparent', 'rgba(255,255,255,0.95)']}
-          style={styles.fadeGradient}
-          pointerEvents="none"
-        />
-        <ScrollView
-          ref={scrollViewRef}
-          onContentSizeChange={() => scrollViewRef.current.scrollToEnd({ animated: true })}
-          style={styles.chatScroll}
-          contentContainerStyle={styles.chatScrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          {chatMessages.map((msg) => (
-            <View
-              key={msg.id}
-              style={[
-                styles.message,
-                msg.isAgent ? styles.agentMessage : styles.userMessage,
-              ]}
+        {/* Top Bar */}
+        <View style={styles.topBar}>
+          <View style={styles.profileSection}>
+            <View style={styles.avatar}>
+              <Text style={styles.avatarText}>🤖</Text>
+            </View>
+            <View style={styles.healthBar}>
+              <View style={styles.healthFill} />
+            </View>
+            <TouchableOpacity 
+              style={styles.journalButton}
+              onPress={() => router.push('/journal')}
             >
-              <Text 
+              <Text style={styles.journalButtonText}>📔</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.topRight}>
+            <TouchableOpacity 
+              style={styles.walletButton}
+              onPress={() => router.push('/wallet')}
+            >
+              <Text style={styles.walletText}>₿ 1,234</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={styles.logoutButton}
+              onPress={handleLogout}
+            >
+              <Text style={styles.logoutText}>🚪</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Chat Area */}
+        <View style={styles.chatContainer}>
+          <LinearGradient
+            colors={['rgba(255,255,255,0)', 'rgba(255,255,255,0.1)', 'rgba(255,255,255,0.2)']}
+            style={styles.fadeGradient}
+            pointerEvents="none"
+          />
+          <ScrollView
+            ref={scrollViewRef}
+            onContentSizeChange={() => scrollViewRef.current.scrollToEnd({ animated: true })}
+            style={styles.chatScroll}
+            contentContainerStyle={styles.chatScrollContent}
+            showsVerticalScrollIndicator={false}
+          >
+            {chatMessages.map((msg) => (
+              <View
+                key={msg.id}
                 style={[
-                  styles.messageText,
-                  msg.isAgent ? styles.agentMessageText : styles.userMessageText,
+                  styles.message,
+                  msg.isAgent ? styles.agentMessage : styles.userMessage,
                 ]}
               >
-                {msg.text}
-              </Text>
-            </View>
-          ))}
-        </ScrollView>
+                <Text 
+                  style={[
+                    styles.messageText,
+                    msg.isAgent ? styles.agentMessageText : styles.userMessageText,
+                  ]}
+                >
+                  {msg.text}
+                </Text>
+              </View>
+            ))}
+          </ScrollView>
 
-        {/* Input Area */}
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            value={message}
-            onChangeText={setMessage}
-            placeholder="Type a message..."
-            placeholderTextColor={Colors.softGray}
-            multiline
-            blurOnSubmit={true}
-            returnKeyType="send"
-            onSubmitEditing={handleSend}
-          />
-          <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
-            <Text style={styles.sendButtonText}>📤</Text>
-          </TouchableOpacity>
+          {/* Input Area */}
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.input}
+              value={message}
+              onChangeText={setMessage}
+              placeholder="Type a message..."
+              placeholderTextColor={Colors.softGray}
+              multiline
+              blurOnSubmit={true}
+              returnKeyType="send"
+              onSubmitEditing={handleSend}
+            />
+            <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
+              <Text style={styles.sendButtonText}>📤</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
@@ -155,6 +158,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.skyBlue,
+  },
+  keyboardView: {
+    flex: 1,
   },
   canvasContainer: {
     position: 'absolute',
@@ -270,7 +276,7 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
     right: 0,
-    height: 40,
+    height: 60,
     zIndex: 2,
   },
   chatScroll: {
@@ -279,8 +285,9 @@ const styles = StyleSheet.create({
   },
   chatScrollContent: {
     flexGrow: 1,
-    paddingTop: 40,
+    paddingTop: 20,
     paddingHorizontal: 10,
+    paddingBottom: 10,
   },
   message: {
     maxWidth: '80%',
@@ -325,6 +332,7 @@ const styles = StyleSheet.create({
     color: Colors.darkOrangeBrown,
     borderWidth: 1,
     borderColor: Colors.softGray,
+    maxHeight: 100,
   },
   sendButton: {
     width: 44,
