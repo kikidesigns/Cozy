@@ -1,7 +1,8 @@
 import { router } from 'expo-router';
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
-import { globalStyles } from '../constants/styles';
+import { Colors } from '../constants/Colors';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 
 const MOCK_TASKS = [
   {
@@ -28,6 +29,28 @@ const MOCK_TASKS = [
 ];
 
 export default function JournalScreen() {
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return Colors.sageGreen;
+      case 'in_progress':
+        return Colors.skyBlue;
+      default:
+        return Colors.orangeBrown;
+    }
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'completed':
+        return 'check-circle';
+      case 'in_progress':
+        return 'clock-o';
+      default:
+        return 'hourglass-o';
+    }
+  };
+
   return (
     <View style={styles.container}>
       <ScrollView style={styles.taskList}>
@@ -41,12 +64,16 @@ export default function JournalScreen() {
               <Text style={styles.taskTitle}>{task.title}</Text>
               <View style={[
                 styles.statusBadge,
-                task.status === 'completed' && styles.statusCompleted,
-                task.status === 'in_progress' && styles.statusInProgress,
+                { backgroundColor: getStatusColor(task.status) }
               ]}>
+                <FontAwesome 
+                  name={getStatusIcon(task.status)} 
+                  size={12} 
+                  color={Colors.white}
+                  style={styles.statusIcon}
+                />
                 <Text style={styles.statusText}>
-                  {task.status === 'completed' ? '✓' :
-                   task.status === 'in_progress' ? '⟳' : '⌛'}
+                  {task.status.charAt(0).toUpperCase() + task.status.slice(1)}
                 </Text>
               </View>
             </View>
@@ -54,12 +81,16 @@ export default function JournalScreen() {
             <Text style={styles.taskDescription}>{task.description}</Text>
             
             <View style={styles.taskFooter}>
-              <Text style={styles.taskDate}>{task.date}</Text>
+              <View style={styles.dateContainer}>
+                <FontAwesome name="calendar" size={12} color={Colors.softGray} />
+                <Text style={styles.taskDate}>{task.date}</Text>
+              </View>
               <TouchableOpacity 
                 style={styles.detailsButton}
                 onPress={() => router.push(`/task/${task.id}`)}
               >
-                <Text style={styles.detailsButtonText}>View Details →</Text>
+                <Text style={styles.detailsButtonText}>View Details</Text>
+                <FontAwesome name="arrow-right" size={12} color={Colors.orangeBrown} />
               </TouchableOpacity>
             </View>
           </TouchableOpacity>
@@ -72,71 +103,82 @@ export default function JournalScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: Colors.warmBeige,
   },
   taskList: {
-    padding: 15,
+    padding: 16,
   },
   taskCard: {
-    backgroundColor: '#2a2a2a',
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 15,
+    backgroundColor: Colors.white,
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: Colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   taskHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   taskTitle: {
-    color: '#fff',
+    color: Colors.darkOrangeBrown,
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: '600',
     flex: 1,
+    marginRight: 12,
   },
   statusBadge: {
-    backgroundColor: '#666',
-    borderRadius: 12,
-    width: 24,
-    height: 24,
-    justifyContent: 'center',
+    flexDirection: 'row',
     alignItems: 'center',
-    marginLeft: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
-  statusCompleted: {
-    backgroundColor: '#4ECDC4',
-  },
-  statusInProgress: {
-    backgroundColor: '#FFB347',
+  statusIcon: {
+    marginRight: 4,
   },
   statusText: {
-    color: '#fff',
+    color: Colors.white,
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
   taskDescription: {
-    color: '#888',
+    color: Colors.text,
     fontSize: 14,
-    marginBottom: 15,
+    lineHeight: 20,
+    marginBottom: 12,
   },
   taskFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  dateContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
   taskDate: {
-    color: '#666',
+    color: Colors.softGray,
     fontSize: 12,
   },
   detailsButton: {
-    backgroundColor: '#333',
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    borderRadius: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    backgroundColor: Colors.lightBeige,
   },
   detailsButtonText: {
-    color: '#4ECDC4',
+    color: Colors.orangeBrown,
     fontSize: 12,
+    fontWeight: '600',
   },
 });
