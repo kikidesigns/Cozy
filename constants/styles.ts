@@ -3,7 +3,6 @@ import { StyleSheet } from 'react-native';
 export const globalStyles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
     backgroundColor: '#fff',
   },
   title: {
@@ -43,9 +42,18 @@ export const globalStyles = StyleSheet.create({
     marginVertical: 8,
   },
   backButton: {
-    position: 'absolute',
-    top: 40,
-    left: 20,
     zIndex: 1,
+  },
+  header: {
+    width: '100%',
+    paddingTop: 48,
+    paddingBottom: 16,
+    paddingHorizontal: 16,
+    backgroundColor: '#C17F59',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
 });
