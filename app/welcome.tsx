@@ -1,8 +1,9 @@
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import { globalStyles } from '../constants/styles';
 import { Colors } from '../constants/Colors';
+import { useNostrAuth } from '../hooks/useNostrAuth';
 
 // Use our cozy color palette for agent colors
 const AGENT_COLORS = [
@@ -15,14 +16,37 @@ const AGENT_COLORS = [
 ];
 
 export default function WelcomeScreen() {
-  const [npub, setNpub] = useState('');
+  const { login, updateProfile } = useNostrAuth();
   const [nsec, setNsec] = useState('');
   const [name, setName] = useState('');
   const [selectedColor, setSelectedColor] = useState(AGENT_COLORS[0]);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = () => {
-    // TODO: Implement actual login logic
-    router.replace('/home');
+  const handleLogin = async () => {
+    if (!nsec) {
+      Alert.alert('Error', 'Please enter your nsec key');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const success = await login(nsec);
+      if (success) {
+        if (name || selectedColor) {
+          await updateProfile({
+            name,
+            color: selectedColor,
+          });
+        }
+        router.replace('/home');
+      } else {
+        Alert.alert('Error', 'Invalid nsec key');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to log in');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -39,14 +63,6 @@ export default function WelcomeScreen() {
         </View>
 
         <View style={styles.inputContainer}>
-          <TextInput
-            style={[globalStyles.input, styles.input]}
-            placeholder="Enter npub"
-            placeholderTextColor={Colors.softGray}
-            value={npub}
-            onChangeText={setNpub}
-          />
-          
           <TextInput
             style={[globalStyles.input, styles.input]}
             placeholder="Enter nsec"
@@ -94,20 +110,28 @@ export default function WelcomeScreen() {
           <TouchableOpacity 
             style={[globalStyles.button, styles.button, styles.resetButton]}
             onPress={() => {
-              setNpub('');
               setNsec('');
               setName('');
               setSelectedColor(AGENT_COLORS[0]);
             }}
+            disabled={isLoading}
           >
             <Text style={[globalStyles.buttonText, styles.resetButtonText]}>Reset</Text>
           </TouchableOpacity>
 
           <TouchableOpacity 
-            style={[globalStyles.button, styles.button, styles.loginButton]}
+            style={[
+              globalStyles.button, 
+              styles.button, 
+              styles.loginButton,
+              isLoading && styles.disabledButton
+            ]}
             onPress={handleLogin}
+            disabled={isLoading}
           >
-            <Text style={[globalStyles.buttonText, styles.loginButtonText]}>Login</Text>
+            <Text style={[globalStyles.buttonText, styles.loginButtonText]}>
+              {isLoading ? 'Logging in...' : 'Login'}
+            </Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -244,5 +268,8 @@ const styles = StyleSheet.create({
   loginButtonText: {
     color: Colors.white,
     fontWeight: '600',
+  },
+  disabledButton: {
+    opacity: 0.5,
   },
 });
