@@ -2,24 +2,33 @@
 
 ## Core Features
 
-### 1. Agent Authentication (Simple Version)
+### 1. Agent Per User
 - Login with nsec only
 - Basic agent customization (name, color)
 - Simple task/conversation history stored in Nostr events
+- One agent per Nostr identity
+- Basic journal for tracking agent activities
 
-### 2. Lightning Wallet (Breez SDK)
-- Full send/receive functionality
+### 2. Wallet Per Agent
+- Each agent has dedicated Lightning wallet
+- Full send/receive functionality via Breez SDK
 - Push notifications for payment verification
-- Balance display in home screen
-- Transaction history
-- Basic wallet screen UI
+- Balance display in home screen (pill-shaped UI)
+- Transaction history in wallet screen
 
-### 3. Marketplace Search & Transactions
-- Search NIP-15 marketplace listings
+### 3. Agent to Agent Transactions
+- Direct Lightning payments between agents
+- Search marketplace listings (NIP-15)
+- Agent handles transaction messaging
+- Payment verification via push notifications
+- Transaction status tracking in journal
+
+### 4. Nostr Search by Agent
+- Agent searches NIP-15 marketplace listings
 - Display results from existing Nostr network
-- No additional seller verification
-- Direct Lightning payments
-- Transaction status tracking
+- No additional seller verification needed
+- Search animation while agent is working
+- Results displayed in chat with core details
 
 ## File Structure
 
@@ -77,27 +86,34 @@ constants/
 
 ## Key Workflows
 
-### 1. Authentication Flow
+### Agent Per User Flow
 1. User inputs nsec
 2. Agent created/loaded
 3. Basic customization available
 4. Redirect to home screen
 
-### 2. Marketplace Transaction Flow
+### Agent to Agent Transaction Flow
 1. User requests item search via chat
 2. Agent searches NIP-15 events
 3. Display results
 4. User selects item
-5. Payment initiated via Breez SDK
+5. Agent initiates transaction with seller's agent
 6. User receives push notification
 7. User verifies payment
 8. Transaction status tracked in journal
 
-### 3. Wallet Operations
-1. Display balance in home screen
+### Wallet Per Agent Operations
+1. Display balance in home screen pill
 2. Send/receive functionality
 3. Push notifications for verification
 4. Transaction history in wallet screen
+
+### Nostr Search by Agent Flow
+1. User requests search via chat
+2. Agent queries NIP-15 marketplace
+3. Loading animation shown
+4. Results displayed in chat
+5. Option to initiate transaction
 
 ## MVP Limitations
 
@@ -118,23 +134,25 @@ constants/
 
 ## Development Priorities
 
-1. Basic Authentication
+1. Agent Per User
    - nsec login
    - Agent creation
+   - Basic journal
 
-2. Wallet Integration
+2. Wallet Per Agent
    - Breez SDK setup
    - Send/receive
    - Push notifications
 
-3. Marketplace
-   - NIP-15 search
+3. Agent to Agent Transactions
+   - NIP-15 integration
    - Transaction flow
-   - Payment integration
+   - Payment handling
 
-4. Simple Memory
-   - Recent events
-   - Basic journal
+4. Nostr Search by Agent
+   - Marketplace query
+   - Result display
+   - Search animation
 
 ## Technical Stack
 
