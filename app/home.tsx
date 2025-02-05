@@ -371,7 +371,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     minHeight: 44,
     maxHeight: 100,
-    cursor: 'text',
   },
   sendButton: {
     width: 44,
