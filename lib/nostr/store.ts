@@ -2,9 +2,11 @@ import { create } from 'zustand';
 import { NostrKeys } from './nostr';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { nostr } from './nostr';
+import { NostrRelay } from './relay';
 
 interface NostrState {
   keys: NostrKeys | null;
+  relay: NostrRelay | null;
   initialized: boolean;
   error: string | null;
   setKeys: (keys: NostrKeys) => void;
@@ -13,10 +15,12 @@ interface NostrState {
   initializeFromNsec: (nsec: string) => Promise<boolean>;
   generateNewKeys: () => Promise<boolean>;
   logout: () => Promise<void>;
+  initializeRelay: () => Promise<void>;
 }
 
-export const useNostrStore = create<NostrState>((set) => ({
+export const useNostrStore = create<NostrState>((set, get) => ({
   keys: null,
+  relay: null,
   initialized: false,
   error: null,
 
@@ -37,6 +41,9 @@ export const useNostrStore = create<NostrState>((set) => ({
       // Store nsec in AsyncStorage
       await AsyncStorage.setItem('@cozy_nsec', nsec);
       console.log('[NostrStore] Nsec stored in AsyncStorage');
+
+      // Initialize relay after keys are set
+      await get().initializeRelay();
       
       return true;
     } catch (error) {
@@ -70,6 +77,9 @@ export const useNostrStore = create<NostrState>((set) => ({
         await AsyncStorage.setItem('@cozy_mnemonic', keys.mnemonic);
       }
       console.log('[NostrStore] Keys stored in AsyncStorage');
+
+      // Initialize relay after keys are set
+      await get().initializeRelay();
       
       return true;
     } catch (error) {
@@ -85,8 +95,14 @@ export const useNostrStore = create<NostrState>((set) => ({
   logout: async () => {
     try {
       console.log('[NostrStore] Logging out...');
+      // Clean up relay
+      const { relay } = get();
+      if (relay) {
+        relay.cleanup();
+      }
+      
       // Clear keys from state
-      set({ keys: null, initialized: false, error: null });
+      set({ keys: null, relay: null, initialized: false, error: null });
       
       // Clear storage
       await AsyncStorage.multiRemove([
@@ -98,6 +114,21 @@ export const useNostrStore = create<NostrState>((set) => ({
       console.error('[NostrStore] Logout error:', error);
       set({
         error: error instanceof Error ? error.message : 'Failed to logout'
+      });
+    }
+  },
+
+  initializeRelay: async () => {
+    try {
+      console.log('[NostrStore] Initializing relay...');
+      const relay = new NostrRelay();
+      await relay.connect();
+      set({ relay });
+      console.log('[NostrStore] Relay initialized');
+    } catch (error) {
+      console.error('[NostrStore] Relay initialization error:', error);
+      set({ 
+        error: error instanceof Error ? error.message : 'Failed to initialize relay'
       });
     }
   }
