@@ -2,9 +2,9 @@ import { router } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, ScrollView } from 'react-native';
 import { useNostrAuth } from '@/hooks/useNostrAuth';
-import { welcomeStyles as styles } from './welcome/styles';
-import { LoginScreen, AGENT_COLORS } from './welcome/LoginScreen';
-import { BackupScreen } from './welcome/BackupScreen';
+import { welcomeStyles as styles } from '@/components/welcome/styles';
+import { LoginScreen, AGENT_COLORS } from '@/components/welcome/LoginScreen';
+import { BackupScreen } from '@/components/welcome/BackupScreen';
 
 export default function WelcomeScreen() {
   const { login, createNewAccount, error } = useNostrAuth();
