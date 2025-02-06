@@ -11,6 +11,8 @@ interface NostrState {
   setError: (error: string | null) => void;
   setInitialized: (initialized: boolean) => void;
   initializeFromNsec: (nsec: string) => Promise<boolean>;
+  generateNewKeys: () => Promise<boolean>;
+  logout: () => Promise<void>;
 }
 
 export const useNostrStore = create<NostrState>((set) => ({
@@ -41,6 +43,49 @@ export const useNostrStore = create<NostrState>((set) => ({
         initialized: false 
       });
       return false;
+    }
+  },
+
+  generateNewKeys: async () => {
+    try {
+      // Generate new keys
+      const keys = await nostr.generateNewKeys();
+      
+      // Save keys
+      set({ keys, initialized: true, error: null });
+      
+      // Store nsec and mnemonic in AsyncStorage
+      await AsyncStorage.setItem('@cozy_nsec', keys.nsec);
+      if (keys.mnemonic) {
+        await AsyncStorage.setItem('@cozy_mnemonic', keys.mnemonic);
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('[NostrStore] Key generation error:', error);
+      set({
+        error: error instanceof Error ? error.message : 'Failed to generate keys',
+        initialized: false
+      });
+      return false;
+    }
+  },
+
+  logout: async () => {
+    try {
+      // Clear keys from state
+      set({ keys: null, initialized: false, error: null });
+      
+      // Clear storage
+      await AsyncStorage.multiRemove([
+        '@cozy_nsec',
+        '@cozy_mnemonic'
+      ]);
+    } catch (error) {
+      console.error('[NostrStore] Logout error:', error);
+      set({
+        error: error instanceof Error ? error.message : 'Failed to logout'
+      });
     }
   }
 }));
