@@ -8,7 +8,7 @@ interface Profile {
 
 interface CreateAccountResult {
   success: boolean;
-  mnemonic?: string;
+  nsec?: string;
 }
 
 export function useNostrAuth() {
@@ -27,14 +27,14 @@ export function useNostrAuth() {
     const currentKeys = useNostrStore.getState().keys;
     console.log('[useNostrAuth] Account creation result:', { 
       success, 
-      hasMnemonic: !!currentKeys?.mnemonic,
-      mnemonic: currentKeys?.mnemonic?.slice(0, 10) + '...'
+      hasKeys: !!currentKeys,
+      nsecPreview: currentKeys?.nsec?.slice(0, 10) + '...'
     });
     
-    if (success && currentKeys?.mnemonic) {
+    if (success && currentKeys?.nsec) {
       return {
         success: true,
-        mnemonic: currentKeys.mnemonic
+        nsec: currentKeys.nsec
       };
     }
     return { success: false };
