@@ -26,14 +26,17 @@ export const useNostrStore = create<NostrState>((set) => ({
 
   initializeFromNsec: async (nsec) => {
     try {
+      console.log('[NostrStore] Initializing from nsec...');
       // Derive keys from nsec
       const keys = await nostr.deriveKeysFromNsec(nsec);
+      console.log('[NostrStore] Keys derived:', { npub: keys.npub });
       
       // Save keys
       set({ keys, initialized: true, error: null });
       
       // Store nsec in AsyncStorage
       await AsyncStorage.setItem('@cozy_nsec', nsec);
+      console.log('[NostrStore] Nsec stored in AsyncStorage');
       
       return true;
     } catch (error) {
@@ -48,17 +51,25 @@ export const useNostrStore = create<NostrState>((set) => ({
 
   generateNewKeys: async () => {
     try {
+      console.log('[NostrStore] Generating new keys...');
       // Generate new keys
       const keys = await nostr.generateNewKeys();
+      console.log('[NostrStore] Keys generated:', { 
+        npub: keys.npub,
+        hasMnemonic: !!keys.mnemonic,
+        mnemonicLength: keys.mnemonic?.split(' ').length
+      });
       
       // Save keys
       set({ keys, initialized: true, error: null });
+      console.log('[NostrStore] Keys saved to state');
       
       // Store nsec and mnemonic in AsyncStorage
       await AsyncStorage.setItem('@cozy_nsec', keys.nsec);
       if (keys.mnemonic) {
         await AsyncStorage.setItem('@cozy_mnemonic', keys.mnemonic);
       }
+      console.log('[NostrStore] Keys stored in AsyncStorage');
       
       return true;
     } catch (error) {
@@ -73,6 +84,7 @@ export const useNostrStore = create<NostrState>((set) => ({
 
   logout: async () => {
     try {
+      console.log('[NostrStore] Logging out...');
       // Clear keys from state
       set({ keys: null, initialized: false, error: null });
       
@@ -81,6 +93,7 @@ export const useNostrStore = create<NostrState>((set) => ({
         '@cozy_nsec',
         '@cozy_mnemonic'
       ]);
+      console.log('[NostrStore] Storage cleared');
     } catch (error) {
       console.error('[NostrStore] Logout error:', error);
       set({
