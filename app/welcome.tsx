@@ -4,6 +4,7 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert 
 import { globalStyles } from '../constants/styles';
 import { Colors } from '../constants/Colors';
 import { useNostrAuth } from '../hooks/useNostrAuth';
+import * as Clipboard from 'expo-clipboard';
 
 // Use our cozy color palette for agent colors
 const AGENT_COLORS = [
@@ -22,6 +23,7 @@ export default function WelcomeScreen() {
   const [selectedColor, setSelectedColor] = useState(AGENT_COLORS[0]);
   const [isLoading, setIsLoading] = useState(false);
   const [mnemonic, setMnemonic] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const handleLogin = async () => {
     if (!nsec) {
@@ -52,9 +54,8 @@ export default function WelcomeScreen() {
     setIsLoading(true);
     try {
       const result = await createNewAccount();
-      if (result.success) {
+      if (result.success && result.mnemonic) {
         setMnemonic(result.mnemonic);
-        // Don't navigate yet - show mnemonic first
       } else {
         Alert.alert('Error', 'Failed to create account');
       }
@@ -62,6 +63,14 @@ export default function WelcomeScreen() {
       Alert.alert('Error', error instanceof Error ? error.message : 'Failed to create account');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleCopyMnemonic = async () => {
+    if (mnemonic) {
+      await Clipboard.setStringAsync(mnemonic);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     }
   };
 
@@ -82,7 +91,7 @@ export default function WelcomeScreen() {
           
           <View style={styles.mnemonicContainer}>
             <Text style={styles.mnemonicWarning}>
-              Write down these 24 words in order and keep them safe. They are the only way to recover your account!
+              Write down these 12 words in order and keep them safe. They are the only way to recover your account!
             </Text>
             <View style={styles.mnemonicWords}>
               {mnemonic.split(' ').map((word, index) => (
@@ -93,6 +102,15 @@ export default function WelcomeScreen() {
               ))}
             </View>
           </View>
+
+          <TouchableOpacity
+            style={[globalStyles.button, styles.button, styles.copyButton]}
+            onPress={handleCopyMnemonic}
+          >
+            <Text style={[globalStyles.buttonText, styles.copyButtonText]}>
+              {copied ? 'Copied!' : 'Copy All Words'}
+            </Text>
+          </TouchableOpacity>
 
           <TouchableOpacity
             style={[globalStyles.button, styles.button, styles.confirmButton]}
@@ -323,9 +341,16 @@ const styles = StyleSheet.create({
     color: Colors.white,
     fontWeight: '600',
   },
+  copyButton: {
+    backgroundColor: Colors.skyBlue,
+    marginBottom: 16,
+  },
+  copyButtonText: {
+    color: Colors.white,
+    fontWeight: '600',
+  },
   confirmButton: {
     backgroundColor: Colors.sageGreen,
-    marginTop: 20,
   },
   confirmButtonText: {
     color: Colors.white,
