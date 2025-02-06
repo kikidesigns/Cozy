@@ -16,11 +16,12 @@ const AGENT_COLORS = [
 ];
 
 export default function WelcomeScreen() {
-  const { login, updateProfile } = useNostrAuth();
+  const { login, createNewAccount, keys, error } = useNostrAuth();
   const [nsec, setNsec] = useState('');
   const [name, setName] = useState('');
   const [selectedColor, setSelectedColor] = useState(AGENT_COLORS[0]);
   const [isLoading, setIsLoading] = useState(false);
+  const [mnemonic, setMnemonic] = useState<string | null>(null);
 
   const handleLogin = async () => {
     if (!nsec) {
@@ -33,21 +34,78 @@ export default function WelcomeScreen() {
       const success = await login(nsec);
       if (success) {
         if (name || selectedColor) {
-          await updateProfile({
-            name,
-            color: selectedColor,
-          });
+          // TODO: Implement profile update via Nostr event
+          console.log('Profile update not implemented yet:', { name, color: selectedColor });
         }
         router.replace('/home');
       } else {
         Alert.alert('Error', 'Invalid nsec key');
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to log in');
+      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to log in');
     } finally {
       setIsLoading(false);
     }
   };
+
+  const handleCreateAccount = async () => {
+    setIsLoading(true);
+    try {
+      const result = await createNewAccount();
+      if (result.success) {
+        setMnemonic(result.mnemonic);
+        // Don't navigate yet - show mnemonic first
+      } else {
+        Alert.alert('Error', 'Failed to create account');
+      }
+    } catch (error) {
+      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to create account');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleConfirmMnemonic = () => {
+    if (name || selectedColor) {
+      // TODO: Implement profile update via Nostr event
+      console.log('Profile update not implemented yet:', { name, color: selectedColor });
+    }
+    router.replace('/home');
+  };
+
+  // If we have a mnemonic, show it for backup
+  if (mnemonic) {
+    return (
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
+        <View style={[globalStyles.container, styles.container]}>
+          <Text style={[globalStyles.title, styles.title]}>Backup Your Account</Text>
+          
+          <View style={styles.mnemonicContainer}>
+            <Text style={styles.mnemonicWarning}>
+              Write down these 24 words in order and keep them safe. They are the only way to recover your account!
+            </Text>
+            <View style={styles.mnemonicWords}>
+              {mnemonic.split(' ').map((word, index) => (
+                <View key={index} style={styles.wordContainer}>
+                  <Text style={styles.wordNumber}>{index + 1}.</Text>
+                  <Text style={styles.word}>{word}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+
+          <TouchableOpacity
+            style={[globalStyles.button, styles.button, styles.confirmButton]}
+            onPress={handleConfirmMnemonic}
+          >
+            <Text style={[globalStyles.buttonText, styles.confirmButtonText]}>
+              I've Written These Down
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    );
+  }
 
   return (
     <ScrollView 
@@ -65,7 +123,7 @@ export default function WelcomeScreen() {
         <View style={styles.inputContainer}>
           <TextInput
             style={[globalStyles.input, styles.input]}
-            placeholder="Enter nsec"
+            placeholder="Enter nsec (or create new account)"
             placeholderTextColor={Colors.softGray}
             value={nsec}
             onChangeText={setNsec}
@@ -74,17 +132,16 @@ export default function WelcomeScreen() {
           
           <TextInput
             style={[globalStyles.input, styles.input]}
-            placeholder="Agent Name"
+            placeholder="Agent Name (optional)"
             placeholderTextColor={Colors.softGray}
             value={name}
             onChangeText={setName}
-            editable={!!nsec}
           />
         </View>
 
         {/* Color Selection */}
         <View style={styles.colorContainer}>
-          <Text style={styles.colorTitle}>Choose Agent Color</Text>
+          <Text style={styles.colorTitle}>Choose Agent Color (optional)</Text>
           <View style={styles.colorOptions}>
             {AGENT_COLORS.map((color) => (
               <TouchableOpacity
@@ -108,15 +165,13 @@ export default function WelcomeScreen() {
         
         <View style={styles.buttonContainer}>
           <TouchableOpacity 
-            style={[globalStyles.button, styles.button, styles.resetButton]}
-            onPress={() => {
-              setNsec('');
-              setName('');
-              setSelectedColor(AGENT_COLORS[0]);
-            }}
+            style={[globalStyles.button, styles.button, styles.createButton]}
+            onPress={handleCreateAccount}
             disabled={isLoading}
           >
-            <Text style={[globalStyles.buttonText, styles.resetButtonText]}>Reset</Text>
+            <Text style={[globalStyles.buttonText, styles.createButtonText]}>
+              Create New Account
+            </Text>
           </TouchableOpacity>
 
           <TouchableOpacity 
@@ -127,13 +182,17 @@ export default function WelcomeScreen() {
               isLoading && styles.disabledButton
             ]}
             onPress={handleLogin}
-            disabled={isLoading}
+            disabled={isLoading || !nsec.trim()}
           >
             <Text style={[globalStyles.buttonText, styles.loginButtonText]}>
-              {isLoading ? 'Logging in...' : 'Login'}
+              {isLoading ? 'Loading...' : 'Login'}
             </Text>
           </TouchableOpacity>
         </View>
+
+        {error && (
+          <Text style={styles.errorText}>{error}</Text>
+        )}
       </View>
     </ScrollView>
   );
@@ -237,14 +296,11 @@ const styles = StyleSheet.create({
     borderColor: Colors.white,
   },
   buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     width: '100%',
     paddingHorizontal: 20,
     gap: 16,
   },
   button: {
-    flex: 1,
     height: 48,
     borderRadius: 24,
     shadowColor: Colors.shadow,
@@ -253,13 +309,11 @@ const styles = StyleSheet.create({
     shadowRadius: 2,
     elevation: 2,
   },
-  resetButton: {
-    backgroundColor: Colors.white,
-    borderWidth: 1,
-    borderColor: Colors.softGray,
+  createButton: {
+    backgroundColor: Colors.sageGreen,
   },
-  resetButtonText: {
-    color: Colors.darkOrangeBrown,
+  createButtonText: {
+    color: Colors.white,
     fontWeight: '600',
   },
   loginButton: {
@@ -269,7 +323,55 @@ const styles = StyleSheet.create({
     color: Colors.white,
     fontWeight: '600',
   },
+  confirmButton: {
+    backgroundColor: Colors.sageGreen,
+    marginTop: 20,
+  },
+  confirmButtonText: {
+    color: Colors.white,
+    fontWeight: '600',
+  },
   disabledButton: {
     opacity: 0.5,
+  },
+  errorText: {
+    color: Colors.orangeBrown,
+    marginTop: 16,
+    textAlign: 'center',
+  },
+  mnemonicContainer: {
+    width: '100%',
+    padding: 20,
+    backgroundColor: Colors.white,
+    borderRadius: 12,
+    marginVertical: 20,
+  },
+  mnemonicWarning: {
+    color: Colors.orangeBrown,
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  mnemonicWords: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  wordContainer: {
+    flexDirection: 'row',
+    width: '45%',
+    paddingVertical: 4,
+  },
+  wordNumber: {
+    color: Colors.softGray,
+    width: 24,
+    fontSize: 12,
+  },
+  word: {
+    color: Colors.darkOrangeBrown,
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
