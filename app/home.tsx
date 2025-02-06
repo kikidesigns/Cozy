@@ -21,11 +21,13 @@ import { Scene } from 'three';
 import { Colors } from '../constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNostrAuth } from '../hooks/useNostrAuth';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const CHAT_HEIGHT = SCREEN_HEIGHT / 3;
 
 export default function HomeScreen() {
+  const { keys } = useNostrAuth();
   const [message, setMessage] = useState('');
   const [chatMessages, setChatMessages] = useState([
     { id: 1, text: 'Hello! How can I help you today?', isAgent: true },
@@ -91,9 +93,16 @@ export default function HomeScreen() {
       {/* Top Bar */}
       <View style={[styles.topBar, { paddingTop: insets.top || 50 }]}>
         <View style={styles.profileSection}>
-          <View style={styles.avatar}>
+          <TouchableOpacity style={styles.avatar}>
             <Text style={styles.avatarText}>🤖</Text>
-          </View>
+            {keys?.npub && (
+              <View style={styles.npubBadge}>
+                <Text style={styles.npubText} numberOfLines={1}>
+                  {keys.npub.slice(0, 8)}...
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
           <View style={styles.healthBar}>
             <View style={styles.healthFill} />
           </View>
@@ -239,6 +248,23 @@ const styles = StyleSheet.create({
   },
   avatarText: {
     fontSize: 20,
+  },
+  npubBadge: {
+    position: 'absolute',
+    bottom: -12,
+    left: -4,
+    right: -4,
+    backgroundColor: Colors.darkOrangeBrown,
+    paddingVertical: 2,
+    paddingHorizontal: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: Colors.white,
+  },
+  npubText: {
+    color: Colors.white,
+    fontSize: 8,
+    textAlign: 'center',
   },
   healthBar: {
     width: 100,
