@@ -24,8 +24,8 @@ export class Nostr {
    */
   async generateNewKeys(): Promise<NostrKeys> {
     try {
-      // Generate mnemonic
-      const mnemonic = bip39.generateMnemonic(256); // 24 words
+      // Generate mnemonic (12 words = 128 bits)
+      const mnemonic = bip39.generateMnemonic(128);
       
       // Hash the mnemonic to get a 32-byte private key
       const hash = sha256(mnemonic);
