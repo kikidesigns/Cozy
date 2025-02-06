@@ -51,20 +51,26 @@ export default function WelcomeScreen() {
   };
 
   const handleCreateAccount = async () => {
-    setIsLoading(true);
-    try {
-      const result = await createNewAccount();
-      if (result.success && result.mnemonic) {
-        setMnemonic(result.mnemonic);
-      } else {
-        Alert.alert('Error', 'Failed to create account');
-      }
-    } catch (error) {
-      Alert.alert('Error', error instanceof Error ? error.message : 'Failed to create account');
-    } finally {
-      setIsLoading(false);
+  console.log('[Welcome] Starting account creation...');
+  setIsLoading(true);
+  try {
+    const result = await createNewAccount();
+    console.log('[Welcome] Account creation result:', result);
+    
+    if (result.success && result.mnemonic) {
+      console.log('[Welcome] Setting mnemonic and proceeding...');
+      setMnemonic(result.mnemonic);
+    } else {
+      console.log('[Welcome] Account creation failed:', { result });
+      Alert.alert('Error', 'Failed to create account');
     }
-  };
+  } catch (error) {
+    console.error('[Welcome] Account creation error:', error);
+    Alert.alert('Error', error instanceof Error ? error.message : 'Failed to create account');
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const handleCopyMnemonic = async () => {
     if (mnemonic) {
