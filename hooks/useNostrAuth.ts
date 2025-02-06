@@ -15,11 +15,15 @@ export function useNostrAuth() {
   const { initializeFromNsec, generateNewKeys, logout, keys, error } = useNostrStore();
 
   const login = useCallback(async (nsec: string) => {
+    console.log('[useNostrAuth] Attempting login...');
     return await initializeFromNsec(nsec);
   }, [initializeFromNsec]);
 
   const createNewAccount = useCallback(async (): Promise<CreateAccountResult> => {
+    console.log('[useNostrAuth] Creating new account...');
     const success = await generateNewKeys();
+    console.log('[useNostrAuth] Account creation result:', { success, hasMnemonic: !!keys?.mnemonic });
+    
     if (success && keys?.mnemonic) {
       return {
         success: true,
@@ -31,7 +35,7 @@ export function useNostrAuth() {
 
   const updateProfile = useCallback(async (profile: Profile) => {
     // TODO: Implement profile update via Nostr event
-    console.log('Profile update not implemented yet:', profile);
+    console.log('[useNostrAuth] Profile update not implemented yet:', profile);
     return true;
   }, []);
 
