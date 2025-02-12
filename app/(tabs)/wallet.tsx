@@ -1,81 +1,120 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, SafeAreaView } from 'react-native';
-import { globalStyles } from '../../constants/styles';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, RefreshControl } from 'react-native';
+import { useWallet } from '@/hooks/useWallet';
 import { Colors } from '../../constants/Colors';
-
-interface Transaction {
-  id: number;
-  type: 'received' | 'sent';
-  amount: number;
-  date: string;
-  description?: string;
-}
+import { globalStyles } from '../../constants/styles';
 
 export default function WalletScreen() {
-  const transactions: Transaction[] = [
-    { 
-      id: 1, 
-      type: 'received', 
-      amount: 0.0001, 
-      date: '2024-01-20',
-      description: 'Payment received for task completion'
-    },
-    { 
-      id: 2, 
-      type: 'sent', 
-      amount: 0.00005, 
-      date: '2024-01-19',
-      description: 'Lightning Network payment'
-    },
-    { 
-      id: 3, 
-      type: 'received', 
-      amount: 0.00015, 
-      date: '2024-01-18',
-      description: 'Nostr zap received'
-    },
-  ];
+  const {
+    balance,
+    transactions,
+    error,
+    isLoading,
+    refreshData,
+    sendPayment,
+    receivePayment
+  } = useWallet();
+
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Handle pull-to-refresh
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await refreshData();
+    setRefreshing(false);
+  };
+
+  // Format balance for display
+  const formatSats = (sats: number) => {
+    return new Intl.NumberFormat().format(sats);
+  };
+
+  // Format date for display
+  const formatDate = (timestamp: number) => {
+    return new Date(timestamp).toLocaleDateString();
+  };
+
+  if (isLoading && !refreshing) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={Colors.sageGreen} />
+      </View>
+    );
+  }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={[globalStyles.container, styles.container]}>
-        <Text style={[globalStyles.title, styles.title]}>Wallet</Text>
-
-        <View style={styles.balanceCard}>
-          <Text style={styles.balanceLabel}>Balance</Text>
-          <Text style={styles.balanceAmount}>
-            ₿ 0.0001
-          </Text>
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity style={[styles.actionButton, styles.sendButton]}>
-              <Text style={styles.actionButtonText}>Send</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.actionButton, styles.receiveButton]}>
-              <Text style={styles.actionButtonText}>Receive</Text>
-            </TouchableOpacity>
-          </View>
+    <View style={[globalStyles.container, styles.container]}>
+      {error && (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>{error}</Text>
         </View>
+      )}
 
-        <Text style={styles.sectionTitle}>
-          Recent Transactions
+      <View style={styles.balanceCard}>
+        <Text style={styles.balanceLabel}>Balance</Text>
+        <Text style={styles.balanceAmount}>
+          ₿ {formatSats(balance.balanceSat)}
         </Text>
+        {(balance.pendingSendSat > 0 || balance.pendingReceiveSat > 0) && (
+          <Text style={styles.pendingText}>
+            {balance.pendingReceiveSat > 0 && `Receiving: ${formatSats(balance.pendingReceiveSat)} sats\n`}
+            {balance.pendingSendSat > 0 && `Sending: ${formatSats(balance.pendingSendSat)} sats`}
+          </Text>
+        )}
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity 
+            style={[styles.actionButton, styles.sendButton]}
+            onPress={() => {
+              // TODO: Show send modal
+              console.log('Send pressed');
+            }}
+          >
+            <Text style={styles.actionButtonText}>Send</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.actionButton, styles.receiveButton]}
+            onPress={() => {
+              // TODO: Show receive modal
+              console.log('Receive pressed');
+            }}
+          >
+            <Text style={styles.actionButtonText}>Receive</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
 
-        <ScrollView 
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-        >
-          {transactions.map(tx => (
+      <Text style={styles.sectionTitle}>
+        Recent Transactions
+      </Text>
+
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={Colors.sageGreen}
+          />
+        }
+      >
+        {transactions.length === 0 ? (
+          <Text style={styles.noTransactionsText}>
+            No transactions yet
+          </Text>
+        ) : (
+          transactions.map(tx => (
             <View key={tx.id} style={styles.transactionCard}>
               <View style={styles.transactionHeader}>
                 <View style={styles.transactionInfo}>
                   <Text style={styles.transactionType}>
-                    {tx.type === 'received' ? '📥 Received' : '📤 Sent'}
+                    {tx.type === 'receive' ? '📥 Received' : '📤 Sent'}
                   </Text>
                   <Text style={[
                     styles.transactionAmount,
-                    tx.type === 'received' ? styles.receivedAmount : styles.sentAmount
+                    tx.type === 'receive' ? styles.receivedAmount : styles.sentAmount
                   ]}>
-                    {tx.type === 'received' ? '+' : '-'} ₿ {tx.amount}
+                    {tx.type === 'receive' ? '+' : '-'} {formatSats(tx.amount)} sats
                   </Text>
                 </View>
               </View>
@@ -84,26 +123,52 @@ export default function WalletScreen() {
                   {tx.description}
                 </Text>
               )}
-              <Text style={styles.transactionDate}>{tx.date}</Text>
+              <View style={styles.transactionFooter}>
+                <Text style={styles.transactionDate}>
+                  {formatDate(tx.timestamp)}
+                </Text>
+                {tx.status !== 'complete' && (
+                  <Text style={[
+                    styles.transactionStatus,
+                    tx.status === 'pending' ? styles.pendingStatus : styles.failedStatus
+                  ]}>
+                    {tx.status.toUpperCase()}
+                  </Text>
+                )}
+                {tx.fee && tx.fee > 0 && (
+                  <Text style={styles.feeText}>
+                    Fee: {tx.fee} sats
+                  </Text>
+                )}
+              </View>
             </View>
-          ))}
-        </ScrollView>
-      </View>
-    </SafeAreaView>
+          ))
+        )}
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
+  container: {
     flex: 1,
     backgroundColor: Colors.warmBeige,
   },
-  container: {
-    padding: 20,
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: Colors.warmBeige,
   },
-  title: {
-    color: Colors.darkOrangeBrown,
-    marginBottom: 20,
+  errorContainer: {
+    backgroundColor: Colors.error,
+    padding: 10,
+    marginBottom: 10,
+    borderRadius: 8,
+  },
+  errorText: {
+    color: Colors.white,
+    textAlign: 'center',
   },
   balanceCard: {
     backgroundColor: Colors.white,
@@ -127,6 +192,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: Colors.text,
     marginVertical: 12,
+  },
+  pendingText: {
+    fontSize: 14,
+    color: Colors.text,
+    opacity: 0.7,
+    textAlign: 'center',
+    marginBottom: 12,
   },
   buttonContainer: {
     flexDirection: 'row',
@@ -168,6 +240,12 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 20,
   },
+  noTransactionsText: {
+    textAlign: 'center',
+    color: Colors.text,
+    opacity: 0.6,
+    marginTop: 20,
+  },
   transactionCard: {
     backgroundColor: Colors.white,
     borderRadius: 12,
@@ -208,7 +286,32 @@ const styles = StyleSheet.create({
     opacity: 0.8,
     marginBottom: 8,
   },
+  transactionFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 8,
+  },
   transactionDate: {
+    fontSize: 12,
+    color: Colors.softGray,
+  },
+  transactionStatus: {
+    fontSize: 12,
+    fontWeight: '600',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  pendingStatus: {
+    backgroundColor: Colors.warning + '20',
+    color: Colors.warning,
+  },
+  failedStatus: {
+    backgroundColor: Colors.error + '20',
+    color: Colors.error,
+  },
+  feeText: {
     fontSize: 12,
     color: Colors.softGray,
   },
