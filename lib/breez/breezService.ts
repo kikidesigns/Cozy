@@ -1,13 +1,17 @@
 import * as FileSystem from "expo-file-system"
-import { log } from "@/utils/log"
+// import { log } from "@/utils/log"
 import {
-  connect, defaultConfig, disconnect, getInfo, InputTypeVariant,
-  LiquidNetwork, listPayments, lnurlPay, LnUrlPayResultVariant, parse,
-  PaymentDetailsVariant, PaymentMethod, prepareLnurlPay,
-  prepareReceivePayment, receivePayment, sendPayment, prepareSendPayment,
-  SendDestinationVariant
+    connect, defaultConfig, disconnect, getInfo, InputTypeVariant,
+    LiquidNetwork, listPayments, lnurlPay, LnUrlPayResultVariant, parse,
+    PaymentDetailsVariant, PaymentMethod, prepareLnurlPay,
+    prepareReceivePayment, prepareSendPayment, receivePayment,
+    SendDestinationVariant, sendPayment
 } from "@breeztech/react-native-breez-sdk-liquid"
 import { BalanceInfo, BreezConfig, BreezService, Transaction } from "./types"
+
+const log = (message: string | object) => {
+  console.log(message)
+}
 
 // Helper function to convert file:// URL to path
 const fileUrlToPath = (fileUrl: string) => {
@@ -208,8 +212,8 @@ class BreezServiceImpl implements BreezService {
           timestamp: result.payment.timestamp,
           type: 'send',
           status: result.payment.status === 'complete' ? 'complete' : 'pending',
-          paymentHash: result.payment.details.type === PaymentDetailsVariant.LIGHTNING 
-            ? result.payment.details.paymentHash 
+          paymentHash: result.payment.details.type === PaymentDetailsVariant.LIGHTNING
+            ? result.payment.details.paymentHash
             : undefined,
           fee: result.payment.feesSat,
         }
