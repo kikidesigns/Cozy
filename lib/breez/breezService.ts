@@ -21,7 +21,7 @@ const fileUrlToPath = (fileUrl: string) => {
 // Helper to generate a random id if none is provided
 const generateId = () => Math.random().toString(36).substring(2, 15)
 
-class BreezServiceImpl implements BreezService {
+export class BreezServiceImpl implements BreezService {
   private sdk: any = null
   private mnemonic: string | undefined | null = undefined
   private isInitializedFlag = false

@@ -1,2 +1,2 @@
 export * from './types'
-export * from './breezService'
+export { breezService } from './breezService'

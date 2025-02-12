@@ -1,26 +1,78 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
-import { globalStyles } from '../constants/styles';
-
-const MOCK_TRANSACTIONS = [
-  { id: 1, type: 'received', amount: 500, date: '2024-01-20', from: 'Alice' },
-  { id: 2, type: 'sent', amount: 200, date: '2024-01-19', to: 'Bob' },
-  { id: 3, type: 'received', amount: 1000, date: '2024-01-18', from: 'Charlie' },
-];
+import React from "react"
+import {
+    ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View
+} from "react-native"
+import { Colors } from "@/constants/Colors"
+import { useWallet } from "@/hooks/useWallet"
 
 export default function WalletScreen() {
+  const {
+    isInitialized,
+    balance,
+    transactions,
+    error,
+    isLoading,
+    refreshData,
+    sendPayment,
+    receivePayment
+  } = useWallet();
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <ActivityIndicator size="large" color={Colors.orangeBrown} />
+        <Text style={styles.loadingText}>Initializing wallet...</Text>
+      </View>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <Text style={styles.errorText}>Error: {error}</Text>
+        <TouchableOpacity style={styles.button} onPress={refreshData}>
+          <Text style={styles.buttonText}>Retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  const handleSend = () => {
+    // TODO: Implement send flow
+    console.log('Send pressed');
+  };
+
+  const handleReceive = () => {
+    // TODO: Implement receive flow
+    console.log('Receive pressed');
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.balanceContainer}>
         <Text style={styles.balanceLabel}>Current Balance</Text>
-        <Text style={styles.balanceAmount}>₿ 1,234</Text>
+        <Text style={styles.balanceAmount}>₿ {balance.balanceSat / 100000000}</Text>
+        {balance.pendingSendSat > 0 && (
+          <Text style={styles.pendingText}>Pending send: ₿ {balance.pendingSendSat / 100000000}</Text>
+        )}
+        {balance.pendingReceiveSat > 0 && (
+          <Text style={styles.pendingText}>Pending receive: ₿ {balance.pendingReceiveSat / 100000000}</Text>
+        )}
       </View>
 
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={[styles.button, styles.sendButton]}>
+        <TouchableOpacity
+          style={[styles.button, styles.sendButton]}
+          onPress={handleSend}
+        >
           <Text style={styles.buttonText}>Send</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.button, styles.receiveButton]}>
+        <TouchableOpacity
+          style={[styles.button, styles.receiveButton]}
+          onPress={handleReceive}
+        >
           <Text style={styles.buttonText}>Receive</Text>
         </TouchableOpacity>
       </View>
@@ -28,24 +80,26 @@ export default function WalletScreen() {
       <View style={styles.transactionsContainer}>
         <Text style={styles.sectionTitle}>Recent Transactions</Text>
         <ScrollView>
-          {MOCK_TRANSACTIONS.map((tx) => (
+          {transactions.map((tx) => (
             <View key={tx.id} style={styles.transaction}>
               <View style={styles.txInfo}>
                 <Text style={styles.txType}>
-                  {tx.type === 'received' ? '⬇️ Received' : '⬆️ Sent'}
+                  {tx.type === 'receive' ? '⬇️ Received' : '⬆️ Sent'}
                 </Text>
                 <Text style={styles.txDetails}>
-                  {tx.type === 'received' ? `From ${tx.from}` : `To ${tx.to}`}
+                  {tx.description || 'No description'}
                 </Text>
-                <Text style={styles.txDate}>{tx.date}</Text>
+                <Text style={styles.txDate}>
+                  {new Date(tx.timestamp * 1000).toLocaleDateString()}
+                </Text>
               </View>
-              <Text 
+              <Text
                 style={[
                   styles.txAmount,
-                  tx.type === 'received' ? styles.received : styles.sent
+                  tx.type === 'receive' ? styles.received : styles.sent
                 ]}
               >
-                {tx.type === 'received' ? '+' : '-'} ₿ {tx.amount}
+                {tx.type === 'receive' ? '+' : '-'} ₿ {tx.amount / 100000000}
               </Text>
             </View>
           ))}
@@ -59,6 +113,18 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#1a1a1a',
+  },
+  centered: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: '#fff',
+    marginTop: 10,
+  },
+  errorText: {
+    color: '#FF6B6B',
+    marginBottom: 20,
   },
   balanceContainer: {
     padding: 20,
@@ -74,6 +140,11 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 36,
     fontWeight: 'bold',
+  },
+  pendingText: {
+    color: '#888',
+    fontSize: 14,
+    marginTop: 5,
   },
   buttonContainer: {
     flexDirection: 'row',

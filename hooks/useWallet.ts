@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react'
-import { breezService } from '@/lib/breez'
-import { BalanceInfo, Transaction } from '@/lib/breez/types'
-import { useNostrAuth } from './useNostrAuth'
+import { useEffect, useState } from "react"
+import { breezService } from "@/lib/breez"
+import { BalanceInfo, Transaction } from "@/lib/breez/types"
+import { useNostrAuth } from "./useNostrAuth"
 
 export function useWallet() {
-  const { mnemonic } = useNostrAuth()
+  const { getMnemonic } = useNostrAuth()
   const [isInitialized, setIsInitialized] = useState(false)
   const [balance, setBalance] = useState<BalanceInfo>({
     balanceSat: 0,
@@ -17,25 +17,33 @@ export function useWallet() {
 
   // Initialize Breez SDK
   useEffect(() => {
-    if (!mnemonic) return
-
     const initializeBreez = async () => {
       try {
         setIsLoading(true)
         setError(null)
 
+        // Get mnemonic
+        const mnemonic = await getMnemonic()
+        if (!mnemonic) {
+          setError('No mnemonic available')
+          setIsLoading(false)
+          return
+        }
+
         // Initialize if not already initialized
         if (!breezService.isInitialized()) {
+          console.log('Initializing Breez SDK...')
           await breezService.initialize({
             workingDir: '', // Will be set by breezService
             apiKey: process.env.EXPO_PUBLIC_BREEZ_API_KEY || '',
             network: 'MAINNET',
             mnemonic
           })
+          console.log('Breez SDK initialized')
         }
 
         setIsInitialized(true)
-        
+
         // Fetch initial data
         await refreshData()
       } catch (err) {
@@ -52,7 +60,7 @@ export function useWallet() {
     return () => {
       breezService.disconnect().catch(console.error)
     }
-  }, [mnemonic])
+  }, [getMnemonic])
 
   // Refresh balance and transactions
   const refreshData = async () => {
