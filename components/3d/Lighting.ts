@@ -10,14 +10,14 @@ export class Lighting extends Object3D {
   constructor() {
     super();
 
-    // Add warm ambient light using orangeBrown color
-    const ambientColor = new Color(colorToHex(Colors.orangeBrown));
-    this.ambientLight = new AmbientLight(ambientColor, 0.4);
+    // Add warm ambient light for sunset
+    const ambientColor = new Color(0xff8c69); // Warm salmon color
+    this.ambientLight = new AmbientLight(ambientColor, 0.6);
 
-    // Add directional light (sun) with warm beige color
-    const sunColor = new Color(colorToHex(Colors.lightBeige));
-    this.directionalLight = new DirectionalLight(sunColor, 1.2);
-    this.directionalLight.position.set(20, 25, -120); // Match sun position
+    // Add directional light (sun) with sunset orange color
+    const sunColor = new Color(0xff4500); // Orange-red sunset color
+    this.directionalLight = new DirectionalLight(sunColor, 1.0);
+    this.directionalLight.position.set(-20, 15, 20); // Lower angle for sunset
     this.directionalLight.castShadow = true;
 
     // Configure shadow properties for better quality

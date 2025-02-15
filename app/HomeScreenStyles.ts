@@ -15,14 +15,20 @@ const styles = StyleSheet.create({
     left: 0,
     width: SCREEN_WIDTH,
     height: SCREEN_HEIGHT,
-    zIndex: 0,
+    zIndex: 1,
   },
   canvas: {
     width: '100%',
     height: '100%',
   },
   touchOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'transparent',
+    zIndex: 2,
   },
   topBar: {
     flexDirection: 'row',
@@ -32,7 +38,7 @@ const styles = StyleSheet.create({
     backgroundColor: `${Colors.warmBeige}CC`,
     borderBottomWidth: 1,
     borderBottomColor: Colors.softGray,
-    zIndex: 1,
+    zIndex: 3,
   },
   profileSection: {
     flexDirection: 'row',
@@ -136,7 +142,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: CHAT_HEIGHT,
-    zIndex: 1,
+    zIndex: 3,
   },
   chatContainer: {
     flex: 1,

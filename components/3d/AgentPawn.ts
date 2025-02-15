@@ -6,20 +6,21 @@ export class AgentPawn extends Object3D {
   private mesh: Mesh;
   private material: MeshStandardMaterial;
   targetPosition: Vector3;
-  speed: number = 5; // Units per second
 
   constructor() {
     super();
 
-    // Create a simple box placeholder.
-    const geometry = new BoxGeometry(1, 1, 1);
-    this.material = new MeshStandardMaterial({ color: 0x00ff00 });
+    // Simple box for the pawn
+    const geometry = new BoxGeometry(3, 3, 3); // Even bigger box
+    this.material = new MeshStandardMaterial({ color: 0xff0000 }); // Bright red
     this.mesh = new Mesh(geometry, this.material);
-
+    this.mesh.position.y = 2;
     this.add(this.mesh);
 
-    // Start with the current position as the target.
-    this.targetPosition = this.position.clone();
+    // Initialize position and target
+    this.position.set(0, 0, 40);
+    this.targetPosition = new Vector3(0, 0, 40);
+    console.log('🎯 Pawn created at', this.position);
   }
 
   setColor(color: number) {
@@ -27,20 +28,16 @@ export class AgentPawn extends Object3D {
   }
 
   moveTo(target: Vector3) {
+    console.log('🎯 MoveTo called', {
+      from: this.position.clone(),
+      to: target.clone()
+    });
     this.targetPosition.copy(target);
   }
 
   update(delta: number) {
-    // Move smoothly toward the target position.
-    const direction = new Vector3().subVectors(this.targetPosition, this.position);
-    const distance = direction.length();
-    if (distance > 0.1) {
-      direction.normalize();
-      const moveDistance = Math.min(this.speed * delta, distance);
-      this.position.add(direction.multiplyScalar(moveDistance));
-    }
-    // Optional: continue a simple rotation.
-    this.mesh.rotation.y += delta * 0.5;
+    // Move directly to target
+    this.position.lerp(this.targetPosition, 0.1);
   }
 
   dispose() {

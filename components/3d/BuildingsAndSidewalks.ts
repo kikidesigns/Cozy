@@ -1,8 +1,8 @@
 import {
-  BoxGeometry, CatmullRomCurve3, CircleGeometry, Mesh, MeshStandardMaterial,
-  Object3D, TubeGeometry, Vector3
+  BoxGeometry, CircleGeometry, Mesh, MeshStandardMaterial, Object3D, Vector3
 } from "three"
 import { Colors } from "../../constants/Colors"
+import { GlowingMushroom } from "./GlowingMushroom"
 
 const colorToHex = (color: string) => parseInt(color.replace('#', '0x'));
 
@@ -11,71 +11,69 @@ export class BuildingsAndSidewalks extends Object3D {
     super();
 
     // Create a large circular grass area
-    const radius = 30;
+    const radius = 180;
     const segments = 32;
     const circleGeometry = new CircleGeometry(radius, segments);
     const grassMaterial = new MeshStandardMaterial({
-      color: colorToHex(Colors.grassGreen || '#228B22'),
-      side: 2, // Render both sides
+      color: 0x2ecc40, // Bright grass green color
+      side: 2,
     });
     const grass = new Mesh(circleGeometry, grassMaterial);
     grass.rotation.x = -Math.PI / 2;
     this.add(grass);
 
-    // Create building placeholders
-    // Buildings are arranged in a line with the main office centered.
-    const buildingData = [
-      { name: 'noob area', position: new Vector3(-12, 0, 0), color: 0xffa500 }, // orange
-      { name: 'main office', position: new Vector3(0, 0, 0), color: 0x0000ff },  // blue
-      { name: 'arena', position: new Vector3(12, 0, 0), color: 0xff0000 },       // red
-    ];
+    // Create three tiny buildings
+    const buildingHeight = 12;
 
-    buildingData.forEach(data => {
-      const width = 4, height = 6, depth = 4;
-      const geometry = new BoxGeometry(width, height, depth);
-      const material = new MeshStandardMaterial({ color: data.color });
-      const building = new Mesh(geometry, material);
-      building.position.copy(data.position);
-      // Raise the building so its base sits on the grass
-      building.position.y = height / 2;
-      this.add(building);
-    });
+    // Left building (orange plateau)
+    const plateau = new Mesh(
+      new BoxGeometry(10, buildingHeight, 10),
+      new MeshStandardMaterial({ color: 0xffa500 })
+    );
+    plateau.position.set(-80, buildingHeight / 2, -80);
+    this.add(plateau);
 
-    // Create a maze of curved sidewalks connecting the buildings
+    // Middle building (blue hall)
+    const hall = new Mesh(
+      new BoxGeometry(12, buildingHeight, 15),
+      new MeshStandardMaterial({ color: 0x0000ff })
+    );
+    hall.position.set(0, buildingHeight / 2, -80);
+    this.add(hall);
 
-    const sidewalkMaterial = new MeshStandardMaterial({ color: 0x808080 });
+    // Right building (red arena)
+    const arena = new Mesh(
+      new BoxGeometry(15, buildingHeight, 15),
+      new MeshStandardMaterial({ color: 0xff0000 })
+    );
+    arena.position.set(80, buildingHeight / 2, -80);
+    this.add(arena);
 
-    // Sidewalk 1: from the noob area (building1) to the main office (building2)
-    const sidewalk1Points = [
-      new Vector3(-12, 0.05, 0),
-      new Vector3(-6, 0.05, 5),
-      new Vector3(0, 0.05, 0),
-    ];
-    const curve1 = new CatmullRomCurve3(sidewalk1Points);
-    const sidewalk1Geometry = new TubeGeometry(curve1, 20, 0.3, 8, false);
-    const sidewalk1 = new Mesh(sidewalk1Geometry, sidewalkMaterial);
-    this.add(sidewalk1);
+    // Add glowing mushrooms in a scattered pattern
+    const mushroomCount = 30;
+    const minRadius = 20; // Keep away from center
+    const maxRadius = 150; // Keep inside grass
 
-    // Sidewalk 2: from the main office (building2) to the arena (building3)
-    const sidewalk2Points = [
-      new Vector3(0, 0.05, 0),
-      new Vector3(6, 0.05, -5),
-      new Vector3(12, 0.05, 0),
-    ];
-    const curve2 = new CatmullRomCurve3(sidewalk2Points);
-    const sidewalk2Geometry = new TubeGeometry(curve2, 20, 0.3, 8, false);
-    const sidewalk2 = new Mesh(sidewalk2Geometry, sidewalkMaterial);
-    this.add(sidewalk2);
+    for (let i = 0; i < mushroomCount; i++) {
+      const mushroom = new GlowingMushroom();
 
-    // Sidewalk 3: a looping path for a maze effect connecting the noob area and arena
-    const sidewalk3Points = [
-      new Vector3(-12, 0.05, 0),
-      new Vector3(0, 0.05, 10),
-      new Vector3(12, 0.05, 0),
-    ];
-    const curve3 = new CatmullRomCurve3(sidewalk3Points);
-    const sidewalk3Geometry = new TubeGeometry(curve3, 30, 0.3, 8, false);
-    const sidewalk3 = new Mesh(sidewalk3Geometry, sidewalkMaterial);
-    this.add(sidewalk3);
+      // Random position in polar coordinates
+      const angle = Math.random() * Math.PI * 2;
+      const distance = minRadius + Math.random() * (maxRadius - minRadius);
+
+      // Convert to Cartesian coordinates
+      const x = Math.cos(angle) * distance;
+      const z = Math.sin(angle) * distance;
+
+      // Random rotation
+      mushroom.rotation.y = Math.random() * Math.PI * 2;
+
+      // Random scale variation
+      const scale = 0.5 + Math.random() * 1;
+      mushroom.scale.set(scale, scale, scale);
+
+      mushroom.position.set(x, 0, z);
+      this.add(mushroom);
+    }
   }
 }
