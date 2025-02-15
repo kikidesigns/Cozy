@@ -1,27 +1,18 @@
-import { router } from 'expo-router';
-import React, { useState, useRef, useCallback } from 'react';
+import { router } from "expo-router"
+import React, { useCallback, useRef, useState } from "react"
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  Dimensions,
-  KeyboardAvoidingView,
-  Platform,
-  Keyboard,
-  ScrollView,
-  Pressable,
-} from 'react-native';
-import { ThreeCanvas } from '../components/3d/ThreeCanvas';
-import { AgentPawn } from '../components/3d/AgentPawn';
-import { Environment } from '../components/3d/Environment';
-import { Lighting } from '../components/3d/Lighting';
-import { Scene } from 'three';
-import { Colors } from '../constants/Colors';
-import { Ionicons } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNostrAuth } from '../hooks/useNostrAuth';
+  Dimensions, Keyboard, KeyboardAvoidingView, Platform, Pressable, ScrollView,
+  StyleSheet, Text, TextInput, TouchableOpacity, View
+} from "react-native"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
+import { Scene } from "three"
+import { Ionicons } from "@expo/vector-icons"
+import { BuildingsAndSidewalks } from "../components/3d/BuildingsAndSidewalks"
+import { Environment } from "../components/3d/Environment"
+import { Lighting } from "../components/3d/Lighting"
+import { ThreeCanvas } from "../components/3d/ThreeCanvas"
+import { Colors } from "../constants/Colors"
+import { useNostrAuth } from "../hooks/useNostrAuth"
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const CHAT_HEIGHT = SCREEN_HEIGHT / 3;
@@ -57,15 +48,18 @@ export default function HomeScreen() {
   };
 
   const handleContextCreate = (gl: WebGLRenderingContext, scene: Scene) => {
+    // Set up the sky & fog
     const environment = new Environment();
     scene.add(environment);
+    environment.setScene(scene);
 
+    // Add the circular grass area, buildings, and curved sidewalks
+    const buildings = new BuildingsAndSidewalks();
+    scene.add(buildings);
+
+    // Add lighting (sun, ambient, etc.)
     const lighting = new Lighting();
     scene.add(lighting);
-
-    const pawn = new AgentPawn();
-    pawn.position.y = 1;
-    scene.add(pawn);
   };
 
   const scrollToBottom = useCallback(() => {
@@ -106,7 +100,7 @@ export default function HomeScreen() {
           <View style={styles.healthBar}>
             <View style={styles.healthFill} />
           </View>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.journalButton}
             onPress={() => router.push('/journal')}
           >
@@ -115,13 +109,13 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.topRight}>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.walletButton}
             onPress={() => router.push('/wallet')}
           >
             <Text style={styles.walletText}>₿ 1,234</Text>
           </TouchableOpacity>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.logoutButton}
             onPress={handleLogout}
           >
@@ -155,7 +149,7 @@ export default function HomeScreen() {
                   msg.isAgent ? styles.agentMessage : styles.userMessage,
                 ]}
               >
-                <Text 
+                <Text
                   style={[
                     styles.messageText,
                     msg.isAgent ? styles.agentMessageText : styles.userMessageText,
@@ -184,18 +178,18 @@ export default function HomeScreen() {
               returnKeyType="default"
               enablesReturnKeyAutomatically
             />
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[
                 styles.sendButton,
                 !message.trim() && styles.sendButtonDisabled
-              ]} 
+              ]}
               onPress={handleSend}
               disabled={!message.trim()}
             >
-              <Ionicons 
-                name="send" 
-                size={24} 
-                color={message.trim() ? Colors.white : Colors.softGray} 
+              <Ionicons
+                name="send"
+                size={24}
+                color={message.trim() ? Colors.white : Colors.softGray}
               />
             </TouchableOpacity>
           </View>

@@ -1,9 +1,9 @@
-import React, { useEffect, useRef } from 'react';
-import { View, StyleSheet } from 'react-native';
-import { GLView } from 'expo-gl';
-import { Renderer, THREE } from 'expo-three';
-import { Scene, PerspectiveCamera, Color, FogExp2 } from 'three';
-import { Colors } from '../../constants/Colors';
+import { GLView } from "expo-gl"
+import { Renderer, THREE } from "expo-three"
+import React, { useEffect, useRef } from "react"
+import { StyleSheet, View } from "react-native"
+import { Color, FogExp2, PerspectiveCamera, Scene } from "three"
+import { Colors } from "../../constants/Colors"
 
 interface ThreeCanvasProps {
   onContextCreate?: (gl: WebGLRenderingContext, scene: Scene) => void;
@@ -14,7 +14,6 @@ interface ExpoGLContext extends WebGLRenderingContext {
   endFrameEXP?: () => void;
 }
 
-// Convert hex colors to Three.js colors
 const colorToHex = (color: string) => parseInt(color.replace('#', '0x'));
 
 export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({ onContextCreate, style }) => {
@@ -27,7 +26,7 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({ onContextCreate, style
     const renderer = new Renderer({ gl, alpha: true });
     renderer.setClearColor(0x000000, 0); // Transparent background
     renderer.shadowMap.enabled = true; // Enable shadows
-    
+
     // Set size using gl.drawingBufferWidth/Height
     const width = gl.drawingBufferWidth;
     const height = gl.drawingBufferHeight;
@@ -57,7 +56,7 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({ onContextCreate, style
     // Start render loop
     const render = () => {
       requestAnimationFrame(render);
-      
+
       // Update scene
       if (sceneRef.current) {
         const children = sceneRef.current.children;

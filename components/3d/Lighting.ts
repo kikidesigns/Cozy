@@ -1,7 +1,6 @@
-import { Object3D, AmbientLight, DirectionalLight, Color } from 'three';
-import { Colors } from '../../constants/Colors';
+import { AmbientLight, Color, DirectionalLight, Object3D } from "three"
+import { Colors } from "../../constants/Colors"
 
-// Convert hex colors to Three.js colors
 const colorToHex = (color: string) => parseInt(color.replace('#', '0x'));
 
 export class Lighting extends Object3D {
@@ -14,13 +13,13 @@ export class Lighting extends Object3D {
     // Add warm ambient light using orangeBrown color
     const ambientColor = new Color(colorToHex(Colors.orangeBrown));
     this.ambientLight = new AmbientLight(ambientColor, 0.4);
-    
+
     // Add directional light (sun) with warm beige color
     const sunColor = new Color(colorToHex(Colors.lightBeige));
     this.directionalLight = new DirectionalLight(sunColor, 1.2);
     this.directionalLight.position.set(20, 25, -120); // Match sun position
     this.directionalLight.castShadow = true;
-    
+
     // Configure shadow properties for better quality
     this.directionalLight.shadow.mapSize.width = 2048;
     this.directionalLight.shadow.mapSize.height = 2048;
