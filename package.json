@@ -18,6 +18,8 @@
   },
   "dependencies": {
     "@expo/vector-icons": "^14.0.2",
+    "@gltf-transform/core": "^4.1.1",
+    "@gltf-transform/extensions": "^4.1.1",
     "@react-native-async-storage/async-storage": "1.23.1",
     "@react-navigation/bottom-tabs": "^7.2.0",
     "@react-navigation/native": "^7.0.14",
@@ -25,6 +27,7 @@
     "@scure/bip32": "^1.5.0",
     "bip39": "3.1.0",
     "buffer": "^6.0.3",
+    "draco3dgltf": "^1.5.7",
     "expo": "~52.0.30",
     "expo-blur": "~14.0.3",
     "expo-clipboard": "~7.0.1",
