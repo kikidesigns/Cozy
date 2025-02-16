@@ -35,8 +35,8 @@ export class TouchInputSystem {
         evt: GestureResponderEvent,
         gestureState: PanResponderGestureState
       ) => {
-        // Slowed down: use 0.002 instead of 0.005
-        const deltaAngle = -gestureState.dx * 0.002;
+        // Use a smaller multiplier (0.001) for slower camera panning.
+        const deltaAngle = -gestureState.dx * 0.001;
         this.gameController.rotateCamera(deltaAngle);
       },
     });

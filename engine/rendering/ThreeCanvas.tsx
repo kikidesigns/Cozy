@@ -3,9 +3,7 @@ import { GLView } from "expo-gl"
 import { Renderer } from "expo-three"
 import React, { useCallback } from "react"
 import { StyleSheet, View } from "react-native"
-import {
-  BoxGeometry, Color, Mesh, MeshBasicMaterial, PerspectiveCamera, Scene
-} from "three"
+import { Color, PerspectiveCamera, Scene } from "three"
 import { GameEngine } from "../core/GameEngine"
 import { AgentPawn } from "../entities/AgentPawn"
 import { BuildingsAndSidewalks } from "../entities/BuildingsAndSidewalks"
@@ -30,7 +28,7 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
     const width = gl.drawingBufferWidth;
     const height = gl.drawingBufferHeight;
 
-    // Create a basic scene with a sky-blue background.
+    // Create a scene with a sky-blue background.
     const scene = new Scene();
     scene.background = new Color(0x87ceeb);
 
@@ -44,7 +42,7 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
     renderer.setSize(width, height);
     renderer.setClearColor(0x87ceeb, 1);
 
-    // Register the renderer system with our engine.
+    // Register the renderer system.
     const rendererSystem = {
       update: (delta: number) => {
         renderer.render(scene, camera);
@@ -59,11 +57,11 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
     const ground = new Ground();
     scene.add(ground);
 
-    // (Optional) Add buildings/sidewalks if desired.
+    // Add buildings.
     const buildings = new BuildingsAndSidewalks();
     scene.add(buildings);
 
-    // Add environment (which sets fog/background).
+    // Add environment (sets fog and background).
     const environment = new Environment();
     environment.setScene(scene);
     scene.add(environment);
@@ -76,7 +74,10 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
 
     // Create the AgentPawn.
     const pawn = new AgentPawn();
-    pawn.position.set(0, 1, 0);
+    // Spawn the pawn on grass next to the center building (e.g., x = -6)
+    pawn.position.set(-6, 1, 0);
+    // **Update the pawn's target to its current position**
+    pawn.moveTo(pawn.position.clone());
     scene.add(pawn);
 
     // Create a game controller to update the camera relative to the pawn.
@@ -85,9 +86,8 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
       update: (delta: number) => gameController.update(delta),
     });
 
-    // Instantiate our TouchInputSystem (which implements PanResponder logic).
+    // Instantiate the TouchInputSystem for camera control.
     const touchInput = new TouchInputSystem(gameController);
-    // Pass the panResponder handlers up to the parent via the callback.
     if (onTouchHandlers) {
       onTouchHandlers(touchInput.panResponder.panHandlers);
     }
