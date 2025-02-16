@@ -60,8 +60,8 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
     scene.add(ground);
 
     // (Optional) Add buildings/sidewalks if desired.
-    // const buildings = new BuildingsAndSidewalks();
-    // scene.add(buildings);
+    const buildings = new BuildingsAndSidewalks();
+    scene.add(buildings);
 
     // Add environment (which sets fog/background).
     const environment = new Environment();
