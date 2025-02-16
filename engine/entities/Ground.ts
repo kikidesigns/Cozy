@@ -15,10 +15,16 @@ export class Ground extends Object3D {
       side: DoubleSide,
     });
     const mesh = new Mesh(geometry, material);
-    // Rotate so the circle lies flat
+    // Rotate so the circle lies flat.
     mesh.rotation.x = -Math.PI / 2;
     // Force this ground to render first (behind other objects)
     mesh.renderOrder = -1;
+
+    // Enable shadow receiving.
+    mesh.receiveShadow = true;
+    // Optionally, if you want the ground to cast shadows as well (usually not needed for a flat ground), uncomment:
+    // mesh.castShadow = true;
+
     this.add(mesh);
   }
 }
