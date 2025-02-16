@@ -1,77 +1,72 @@
 import { GLView } from "expo-gl"
-import { Renderer, THREE } from "expo-three"
-import React, { useEffect, useRef } from "react"
+import React, { useCallback } from "react"
 import { StyleSheet, View } from "react-native"
-import { Color, FogExp2, PerspectiveCamera, Scene } from "three"
-import { Colors } from "../../constants/Colors"
+import { GameEngine } from "@/engine/core/GameEngine"
+import { AgentPawn } from "@/engine/entities/AgentPawn"
+import { BuildingsAndSidewalks } from "@/engine/entities/BuildingsAndSidewalks"
+import { Environment } from "@/engine/entities/Environment"
+import { GameController } from "@/engine/entities/GameController"
+import { Lighting } from "@/engine/entities/Lighting"
+import { TouchInputSystem } from "@/engine/input/TouchInputSystem"
+import { RendererSystem } from "@/engine/rendering/RendererSystem"
+import { SceneManager } from "@/engine/rendering/SceneManager"
 
 interface ThreeCanvasProps {
-  onContextCreate?: (gl: WebGLRenderingContext, scene: Scene) => void;
-  onCameraReady?: (camera: PerspectiveCamera) => void;
   style?: any;
+  onEngineReady?: (engine: GameEngine, touchPanHandlers: any) => void;
 }
 
-interface ExpoGLContext extends WebGLRenderingContext {
-  endFrameEXP?: () => void;
-}
-
-const colorToHex = (color: string) => parseInt(color.replace('#', '0x'));
-
-export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({ onContextCreate, onCameraReady, style }) => {
-  const sceneRef = useRef<Scene>(new Scene());
-  const cameraRef = useRef<PerspectiveCamera>();
-  const rendererRef = useRef<Renderer>();
-
-  const onGLContextCreate = async (gl: ExpoGLContext) => {
-    const renderer = new Renderer({ gl, alpha: true });
-    renderer.setClearColor(0x000000, 0); // Transparent background
-    renderer.shadowMap.enabled = true;
+export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({ style, onEngineReady }) => {
+  const onContextCreate = useCallback(async (gl: WebGLRenderingContext) => {
     const width = gl.drawingBufferWidth;
     const height = gl.drawingBufferHeight;
-    renderer.setSize(width, height);
-    rendererRef.current = renderer;
 
-    const camera = new PerspectiveCamera(60, width / height, 0.1, 1000);
-    camera.position.set(0, 8, 15);
-    camera.lookAt(0, 0, 0);
-    cameraRef.current = camera;
+    // Create our scene and camera.
+    const sceneManager = new SceneManager(width, height);
+    // Create the renderer system.
+    const rendererSystem = new RendererSystem(gl, sceneManager.scene, sceneManager.camera);
+    // Initialize our game engine.
+    const engine = new GameEngine();
+    engine.registerSystem(rendererSystem);
 
-    if (onCameraReady) {
-      onCameraReady(camera);
-    }
+    // Set up environment.
+    const environment = new Environment();
+    environment.setScene(sceneManager.scene);
+    sceneManager.scene.add(environment);
 
-    const skyBlueColor = new Color(colorToHex(Colors.skyBlue));
-    sceneRef.current.background = skyBlueColor;
-    sceneRef.current.fog = new FogExp2(colorToHex(Colors.skyBlue), 0.005);
+    // Add buildings and sidewalks.
+    const buildings = new BuildingsAndSidewalks();
+    sceneManager.scene.add(buildings);
 
-    onContextCreate?.(gl, sceneRef.current);
+    // Add lighting.
+    const lighting = new Lighting();
+    sceneManager.scene.add(lighting);
 
-    const render = () => {
-      requestAnimationFrame(render);
-      if (sceneRef.current) {
-        sceneRef.current.children.forEach(child => {
-          if ('update' in child && typeof child.update === 'function') {
-            child.update(0.016); // ~60fps
-          }
-        });
-      }
-      renderer.render(sceneRef.current, camera);
-      gl.endFrameEXP?.();
-    };
-    render();
-  };
+    // Create the agent pawn.
+    const agentPawn = new AgentPawn();
+    agentPawn.position.set(0, 0, 0);
+    sceneManager.scene.add(agentPawn);
 
-  useEffect(() => {
-    return () => {
-      if (rendererRef.current) {
-        rendererRef.current.dispose();
-      }
-    };
+    // Create game controller to sync camera & pawn.
+    const gameController = new GameController(sceneManager.camera, agentPawn);
+    // Register game controller as a system (using duck typing)
+    engine.registerSystem({
+      update: (delta: number) => gameController.update(delta),
+    });
+
+    // Set up touch input.
+    const touchInput = new TouchInputSystem(gameController);
+
+    // Start the engine.
+    engine.start();
+
+    // Inform parent of our engine and touch handlers.
+    onEngineReady && onEngineReady(engine, touchInput.panResponder.panHandlers);
   }, []);
 
   return (
     <View style={[styles.container, style]}>
-      <GLView style={styles.glView} onContextCreate={onGLContextCreate} />
+      <GLView style={styles.glView} onContextCreate={onContextCreate} />
     </View>
   );
 };
@@ -80,11 +75,8 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     overflow: 'hidden',
-    backgroundColor: Colors.skyBlue,
   },
   glView: {
     flex: 1,
-    width: '100%',
-    height: '100%',
   },
 });
