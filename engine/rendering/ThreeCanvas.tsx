@@ -1,7 +1,7 @@
 import { GLView } from "expo-gl"
 import React, { useCallback } from "react"
 import { StyleSheet, View } from "react-native"
-import { AmbientLight, Color, PerspectiveCamera, Scene } from "three"
+import { AmbientLight, Color, PerspectiveCamera, Scene, Vector3 } from "three"
 import { AssetManager } from "../assets/AssetManager" // Updated asset manager
 import { AgentPawn } from "../entities/AgentPawn"
 import { BuildingsAndSidewalks } from "../entities/BuildingsAndSidewalks"
@@ -91,11 +91,11 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
     const assetManager = new AssetManager();
     try {
       // Load ruby model
-      console.log("Loading ruby model...");
-      const rubyGltf = await assetManager.loadModel(
-        require("../../assets/models/ruby-v1.glb")
-      );
-      console.log("Ruby model loaded successfully.");
+      // console.log("Loading ruby model...");
+      // const rubyGltf = await assetManager.loadModel(
+      //   require("../../assets/models/ruby-v1.glb")
+      // );
+      // console.log("Ruby model loaded successfully.");
 
       // Load tower model
       console.log("Loading tower model...");
@@ -108,60 +108,46 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
       const ambientLight = new AmbientLight(0xffffff, 1);
       scene.add(ambientLight);
 
-      // Place rubies
-      const rubyCount = 2;
-      const rubyRadius = 30;
-      const rubyHeightVariation = 1;
-
-      for (let i = 0; i < rubyCount; i++) {
-        const rubyClone = rubyGltf.scene.clone(true);
-        const scale = 1 + Math.random();
-        rubyClone.scale.set(scale, scale, scale);
-
-        const angle = Math.random() * Math.PI * 2;
-        const radius = 5 + Math.random() * rubyRadius;
-        const x = radius * Math.cos(angle);
-        const z = radius * Math.sin(angle);
-        const y = 1 + Math.random() * rubyHeightVariation;
-        rubyClone.position.set(x, y, z);
-
-        rubyClone.rotation.x = Math.random() * Math.PI * 0.2 - 0.1;
-        rubyClone.rotation.y = Math.random() * Math.PI * 2;
-        rubyClone.rotation.z = Math.random() * Math.PI * 0.2 - 0.1;
-
-        scene.add(rubyClone);
-        console.log(
-          `Ruby ${i + 1} added at position (${x.toFixed(2)}, ${y.toFixed(2)}, ${z.toFixed(
-            2
-          )}), scale: ${scale.toFixed(2)}`
-        );
-      }
-
       // Place towers
-      const towerCount = 5;
-      const towerRadius = 20; // Slightly smaller radius for towers
+      const towerCount = 1;
+      // const towerRadius = 20; // Slightly smaller radius for towers
 
       for (let i = 0; i < towerCount; i++) {
         const towerClone = towerGltf.scene.clone(true);
 
-        // Scale the tower appropriately (adjust these values based on the tower's original size)
-        const scale = 2 + Math.random();
+        // Enable shadows for the tower and all its child meshes
+        towerClone.traverse((child: any) => {
+          if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+            // Ensure materials are set up for proper lighting
+            if (child.material) {
+              child.material.needsUpdate = true;
+            }
+          }
+        });
+
+        // Scale the tower to a fixed size
+        const scale = 2;
         towerClone.scale.set(scale, scale, scale);
 
-        // Position towers with good spacing
-        const angle = (i / towerCount) * Math.PI * 2; // Evenly space around the circle
-        const radius = 10 + Math.random() * towerRadius; // Keep them a bit closer to center
-        const x = radius * Math.cos(angle);
-        const z = radius * Math.sin(angle);
-        const y = 0; // Place directly on ground
+        // Position tower 5 units away from starting point (-6, 1, 0)
+        // We'll place it at (-1, 0, 0) which is 5 units to the right of the starting point
+        const x = -1; // 5 units right from -6
+        const z = 0;  // Same Z as starting point
+        const y = 0;  // Place directly on ground
         towerClone.position.set(x, y, z);
 
-        // Rotate only on Y axis for towers
-        towerClone.rotation.y = Math.random() * Math.PI * 2;
+        // Make tower face the starting point
+        // Calculate direction from tower to starting point
+        const startPoint = new Vector3(-6, 0, 0);
+        towerClone.lookAt(startPoint);
+        // Rotate 180 degrees since we want the front to face the starting point
+        towerClone.rotation.y += Math.PI;
 
         scene.add(towerClone);
         console.log(
-          `Tower ${i + 1} added at position (${x.toFixed(2)}, ${y.toFixed(2)}, ${z.toFixed(
+          `Tower placed at position (${x.toFixed(2)}, ${y.toFixed(2)}, ${z.toFixed(
             2
           )}), scale: ${scale.toFixed(2)}`
         );

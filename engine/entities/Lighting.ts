@@ -11,7 +11,7 @@ export class Lighting extends Object3D {
     super();
     // Ambient light remains at full strength.
     const ambientColor = new Color(colorToHex(Colors.orangeBrown));
-    this.ambientLight = new AmbientLight(ambientColor, 1.0);
+    this.ambientLight = new AmbientLight(ambientColor, 0.5);
 
     // Set up a directional (sun) light.
     const sunColor = new Color(colorToHex(Colors.lightBeige));
