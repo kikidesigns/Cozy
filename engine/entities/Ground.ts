@@ -7,7 +7,7 @@ import { Colors } from "../constants/Colors"
 export class Ground extends Object3D {
   constructor() {
     super();
-    const radius = 30;
+    const radius = 60;
     const segments = 32;
     const geometry = new CircleGeometry(radius, segments);
 

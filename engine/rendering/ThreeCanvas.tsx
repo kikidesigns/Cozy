@@ -49,9 +49,9 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
     scene.add(ground);
     console.log("Ground added");
 
-    const buildings = new BuildingsAndSidewalks();
-    scene.add(buildings);
-    console.log("Buildings added");
+    // const buildings = new BuildingsAndSidewalks();
+    // scene.add(buildings);
+    // console.log("Buildings added");
 
     const environment = new Environment();
     environment.setScene(scene);
@@ -87,43 +87,47 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
     }
     console.log("TouchInputSystem registered");
 
-    // --- NEW: Load and scatter ruby models ---
+    // --- NEW: Load and scatter ruby and tower models ---
     const assetManager = new AssetManager();
     try {
+      // Load ruby model
       console.log("Loading ruby model...");
-      const gltf = await assetManager.loadModel(
+      const rubyGltf = await assetManager.loadModel(
         require("../../assets/models/ruby-v1.glb")
       );
       console.log("Ruby model loaded successfully.");
 
-      const rubyCount = 50; // Number of rubies to scatter
-      const groundRadius = 30; // Spread radius
-      const heightVariation = 1; // Height variation
+      // Load tower model
+      console.log("Loading tower model...");
+      const towerGltf = await assetManager.loadModel(
+        require("../../assets/models/tower.glb")
+      );
+      console.log("Tower model loaded successfully.");
 
       // Add ambient light to see the models better
       const ambientLight = new AmbientLight(0xffffff, 1);
       scene.add(ambientLight);
 
-      for (let i = 0; i < rubyCount; i++) {
-        // Deep-clone the loaded model scene
-        const rubyClone = gltf.scene.clone(true);
+      // Place rubies
+      const rubyCount = 2;
+      const rubyRadius = 30;
+      const rubyHeightVariation = 1;
 
-        // Scale up the model to make it more visible
-        const scale = 1 + Math.random(); // Random scale between 1 and 2
+      for (let i = 0; i < rubyCount; i++) {
+        const rubyClone = rubyGltf.scene.clone(true);
+        const scale = 1 + Math.random();
         rubyClone.scale.set(scale, scale, scale);
 
-        // Position with variation
         const angle = Math.random() * Math.PI * 2;
-        const radius = 5 + Math.random() * groundRadius; // Minimum 5 units from center
+        const radius = 5 + Math.random() * rubyRadius;
         const x = radius * Math.cos(angle);
         const z = radius * Math.sin(angle);
-        const y = 1 + Math.random() * heightVariation; // Random height between 1 and 2
+        const y = 1 + Math.random() * rubyHeightVariation;
         rubyClone.position.set(x, y, z);
 
-        // Random rotation on all axes
-        rubyClone.rotation.x = Math.random() * Math.PI * 0.2 - 0.1; // Slight tilt
-        rubyClone.rotation.y = Math.random() * Math.PI * 2; // Full rotation
-        rubyClone.rotation.z = Math.random() * Math.PI * 0.2 - 0.1; // Slight tilt
+        rubyClone.rotation.x = Math.random() * Math.PI * 0.2 - 0.1;
+        rubyClone.rotation.y = Math.random() * Math.PI * 2;
+        rubyClone.rotation.z = Math.random() * Math.PI * 0.2 - 0.1;
 
         scene.add(rubyClone);
         console.log(
@@ -132,8 +136,38 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
           )}), scale: ${scale.toFixed(2)}`
         );
       }
+
+      // Place towers
+      const towerCount = 5;
+      const towerRadius = 20; // Slightly smaller radius for towers
+
+      for (let i = 0; i < towerCount; i++) {
+        const towerClone = towerGltf.scene.clone(true);
+
+        // Scale the tower appropriately (adjust these values based on the tower's original size)
+        const scale = 2 + Math.random();
+        towerClone.scale.set(scale, scale, scale);
+
+        // Position towers with good spacing
+        const angle = (i / towerCount) * Math.PI * 2; // Evenly space around the circle
+        const radius = 10 + Math.random() * towerRadius; // Keep them a bit closer to center
+        const x = radius * Math.cos(angle);
+        const z = radius * Math.sin(angle);
+        const y = 0; // Place directly on ground
+        towerClone.position.set(x, y, z);
+
+        // Rotate only on Y axis for towers
+        towerClone.rotation.y = Math.random() * Math.PI * 2;
+
+        scene.add(towerClone);
+        console.log(
+          `Tower ${i + 1} added at position (${x.toFixed(2)}, ${y.toFixed(2)}, ${z.toFixed(
+            2
+          )}), scale: ${scale.toFixed(2)}`
+        );
+      }
     } catch (error) {
-      console.error("Error loading GLTF model:", error);
+      console.error("Error loading models:", error);
     }
     // --- END NEW ---
   }, [engine, onTouchHandlers]);
