@@ -3,8 +3,8 @@ import { create } from "zustand"
 
 export interface ChatMessage {
   id: number;
-  channel: 'World' | 'Party' | 'Guild' | 'Private';
-  sender: string;
+  channel: "World" | "Party" | "Guild" | "Private";
+  sender: string; // Sender name (Player or NPC)
   text: string;
   timestamp: string;
   recipient?: string;
@@ -12,12 +12,18 @@ export interface ChatMessage {
 
 export interface TradeMessage {
   id: number;
-  senderType: 'NPC' | 'Player';
+  senderType: "NPC" | "Player";
   text: string;
   timestamp: string;
 }
 
-export type TradeStepKey = 'start' | 'offer' | 'buySword' | 'buyShield' | 'end' | 'finish';
+export type TradeStepKey =
+  | "start"
+  | "offer"
+  | "buySword"
+  | "buyShield"
+  | "end"
+  | "finish";
 
 interface TradeOption {
   text: string;
@@ -47,21 +53,15 @@ const tradeDialogueScript: Record<TradeStepKey, TradeStep> = {
   },
   buySword: {
     npcText: "Great choice! You bought the Sword. Thank you for trading.",
-    options: [
-      { text: "Finish", next: "finish" },
-    ],
+    options: [{ text: "Finish", next: "finish" }],
   },
   buyShield: {
     npcText: "Great choice! You bought the Shield. Thank you for trading.",
-    options: [
-      { text: "Finish", next: "finish" },
-    ],
+    options: [{ text: "Finish", next: "finish" }],
   },
   end: {
     npcText: "Alright, maybe another time. Safe travels!",
-    options: [
-      { text: "Finish", next: "finish" },
-    ],
+    options: [{ text: "Finish", next: "finish" }],
   },
   finish: {
     npcText: null,
@@ -70,24 +70,25 @@ const tradeDialogueScript: Record<TradeStepKey, TradeStep> = {
 };
 
 function formatTime(date: Date): string {
-  const h = date.getHours().toString().padStart(2, '0');
-  const m = date.getMinutes().toString().padStart(2, '0');
+  const h = date.getHours().toString().padStart(2, "0");
+  const m = date.getMinutes().toString().padStart(2, "0");
   return `${h}:${m}`;
 }
 
 interface ChatState {
   messages: ChatMessage[];
-  currentChannel: 'World' | 'Party' | 'Guild' | 'Private';
+  currentChannel: "World" | "Party" | "Guild" | "Private";
   isChatActive: boolean;
   isTradeActive: boolean;
   tradeMessages: TradeMessage[];
   tradeStep: TradeStepKey | null;
   sendChatMessage: (
-    channel: 'World' | 'Party' | 'Guild' | 'Private',
+    channel: "World" | "Party" | "Guild" | "Private",
     text: string,
+    sender?: string, // FIXED: Sender name (now properly used)
     recipient?: string
   ) => void;
-  setCurrentChannel: (channel: 'World' | 'Party' | 'Guild' | 'Private') => void;
+  setCurrentChannel: (channel: "World" | "Party" | "Guild" | "Private") => void;
   startTradeConversation: (npcName?: string) => void;
   chooseTradeOption: (optionIndex: number) => void;
   endTradeConversation: () => void;
@@ -96,17 +97,17 @@ interface ChatState {
 
 export const useChatStore = create<ChatState>((set, get) => ({
   messages: [],
-  currentChannel: 'World',
+  currentChannel: "World",
   isChatActive: false,
   isTradeActive: false,
   tradeMessages: [],
   tradeStep: null,
 
-  sendChatMessage: (channel, text, recipient?) => {
+  sendChatMessage: (channel, text, sender = "Player", recipient?) => {
     const newMessage: ChatMessage = {
       id: Date.now(),
       channel,
-      sender: 'Player',
+      sender, // FIXED: Sender is now properly assigned
       text,
       timestamp: formatTime(new Date()),
       ...(recipient ? { recipient } : {}),
@@ -116,8 +117,8 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   setCurrentChannel: (channel) => set({ currentChannel: channel }),
 
-  startTradeConversation: (npcName = 'Trader') => {
-    const initialStep: TradeStepKey = 'start';
+  startTradeConversation: (npcName = "Trader") => {
+    const initialStep: TradeStepKey = "start";
     const initialNpcText = tradeDialogueScript[initialStep].npcText;
     const now = formatTime(new Date());
     set({
@@ -127,7 +128,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         ? [
           {
             id: Date.now(),
-            senderType: 'NPC',
+            senderType: "NPC",
             text: `${npcName}: ${initialNpcText}`,
             timestamp: now,
           },
@@ -148,7 +149,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const now = formatTime(new Date());
     const playerMessage: TradeMessage = {
       id: Date.now(),
-      senderType: 'Player',
+      senderType: "Player",
       text: `You: ${chosenOption.text}`,
       timestamp: now,
     };
@@ -160,7 +161,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     if (nextStepData && nextStepData.npcText) {
       const npcMsg: TradeMessage = {
         id: Date.now() + 1,
-        senderType: 'NPC',
+        senderType: "NPC",
         text: `NPC: ${nextStepData.npcText}`,
         timestamp: formatTime(new Date()),
       };
@@ -168,7 +169,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
 
     set({ tradeMessages: newTradeMessages, tradeStep: nextStep });
-    if (nextStep === 'finish') {
+    if (nextStep === "finish") {
       set({ isTradeActive: false, tradeStep: null });
     }
   },

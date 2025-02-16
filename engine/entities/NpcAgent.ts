@@ -2,6 +2,7 @@
 import {
   BoxGeometry, Camera, Mesh, MeshStandardMaterial, Object3D, Vector3
 } from "three"
+import { useChatStore } from "../chat/ChatStore" // Import chat store
 import { NpcInteractionMenu } from "../ui/NpcInteractionMenu"
 
 export class NpcAgent extends Object3D {
@@ -14,9 +15,11 @@ export class NpcAgent extends Object3D {
   public isInteracting: boolean = false;
   public interactionMenu: NpcInteractionMenu | null = null;
   private currentCamera: Camera | null = null;
+  private agentName: string;
 
-  constructor() {
+  constructor(agentName: string = "Agent 1") {
     super();
+    this.agentName = agentName; // Assign NPC a name
     this.userData.isNpc = true;
 
     const geometry = new BoxGeometry(1, 1, 1);
@@ -39,8 +42,10 @@ export class NpcAgent extends Object3D {
   }
 
   private chooseNewTarget() {
-    const minX = -25, maxX = -15;
-    const minZ = -20, maxZ = -10;
+    const minX = -25,
+      maxX = -15;
+    const minZ = -20,
+      maxZ = -10;
     const randomX = Math.random() * (maxX - minX) + minX;
     const randomZ = Math.random() * (maxZ - minZ) + minZ;
     this.targetPosition.set(randomX, this.baseHeight, randomZ);
@@ -49,7 +54,11 @@ export class NpcAgent extends Object3D {
   update(delta: number) {
     if (!this.isInteracting) {
       const currentHorizontal = new Vector3(this.position.x, 0, this.position.z);
-      const targetHorizontal = new Vector3(this.targetPosition.x, 0, this.targetPosition.z);
+      const targetHorizontal = new Vector3(
+        this.targetPosition.x,
+        0,
+        this.targetPosition.z
+      );
       const direction = new Vector3().subVectors(targetHorizontal, currentHorizontal);
       const distance = direction.length();
       if (distance < 0.1) {
@@ -82,9 +91,11 @@ export class NpcAgent extends Object3D {
     if (!this.interactionMenu) {
       this.interactionMenu = await NpcInteractionMenu.createAsync();
       this.interactionMenu.onChat = () => {
+        this.triggerPrivateChat();
         this.endInteraction();
       };
       this.interactionMenu.onTrade = () => {
+        this.triggerTradeChat();
         this.endInteraction();
       };
       this.interactionMenu.position.set(0, 2, 0);
@@ -95,6 +106,32 @@ export class NpcAgent extends Object3D {
     if (this.interactionMenu && camera) {
       this.interactionMenu.lookAt(camera.position);
     }
+  }
+
+  private triggerPrivateChat(): void {
+    const chatStore = useChatStore.getState();
+    chatStore.setCurrentChannel("Private");
+
+    const npcGreetings = [
+      "Hello, traveler!",
+      "Nice to meet you!",
+      "Welcome to our town!",
+      "Good to see you!",
+      "Hey there! Need anything?",
+    ];
+    const randomGreeting =
+      npcGreetings[Math.floor(Math.random() * npcGreetings.length)];
+
+    chatStore.sendChatMessage("Private", randomGreeting, this.agentName);
+  }
+
+  private triggerTradeChat(): void {
+    const chatStore = useChatStore.getState();
+    chatStore.setCurrentChannel("Private");
+
+    const tradeMessage =
+      "What are you looking for - and what do you have to trade?";
+    chatStore.sendChatMessage("Private", tradeMessage, this.agentName);
   }
 
   public endInteraction(): void {
