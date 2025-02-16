@@ -54,7 +54,7 @@ const formatFiles = async () => {
     const engineFiles = getAllFiles(path.join(root, 'engine'));
 
     // Combine all files to process
-    const filesToCopy = [...specificFiles, ...threeDFiles, ...engineFiles];
+    const filesToCopy = [...specificFiles, ...engineFiles];
 
     for (const filePath of filesToCopy) {
       const fullPath = path.join(root, filePath);
