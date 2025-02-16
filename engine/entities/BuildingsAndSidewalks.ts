@@ -1,4 +1,4 @@
-import { BoxGeometry, Mesh, MeshBasicMaterial, Object3D } from "three"
+import { BoxGeometry, Mesh, MeshStandardMaterial, Object3D } from "three"
 
 const colorToHex = (color: string) => parseInt(color.replace('#', '0x'));
 export class BuildingsAndSidewalks extends Object3D {
@@ -12,9 +12,10 @@ export class BuildingsAndSidewalks extends Object3D {
     buildingData.forEach((data) => {
       const [width, height, depth] = data.size;
       const geometry = new BoxGeometry(width, height, depth);
-      const material = new MeshBasicMaterial({ color: colorToHex(data.color) });
+      const material = new MeshStandardMaterial({ color: colorToHex(data.color) });
       const building = new Mesh(geometry, material);
       building.position.set(data.position[0], data.position[1], data.position[2]);
+      building.castShadow = true;
       this.add(building);
     });
   }
