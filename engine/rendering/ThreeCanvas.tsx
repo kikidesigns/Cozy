@@ -87,45 +87,32 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
     }
     console.log("TouchInputSystem registered");
 
-    // --- NEW: Load a local GLTF/GLB model ("ruby") and add multiple copies ---
+    // --- NEW: Load and scatter ruby models ---
     const assetManager = new AssetManager();
     try {
-      // Load the villa first
-      console.log("Loading villa model...");
-      const villa = await assetManager.loadModel(
-        require("../../assets/models/villa/scene.gltf")
-      );
-      console.log("Villa model loaded successfully");
-
-      // Position and scale the villa
-      villa.scene.scale.set(0.5, 0.5, 0.5);  // Smaller scale
-      villa.scene.position.set(0, 0, -20);    // Further back
-      villa.scene.rotation.y = Math.PI;       // Rotate to face forward
-      scene.add(villa.scene);
-
-      // Now load and scatter the rubies
       console.log("Loading ruby model...");
       const gltf = await assetManager.loadModel(
         require("../../assets/models/ruby-v1.glb")
       );
       console.log("Ruby model loaded successfully.");
 
-      const rubyCount = 50; // More rubies
-      const groundRadius = 30; // Larger spread radius
-      const heightVariation = 1; // Add some height variation
+      const rubyCount = 50; // Number of rubies to scatter
+      const groundRadius = 30; // Spread radius
+      const heightVariation = 1; // Height variation
 
-      // Add ambient light to see the model better
+      // Add ambient light to see the models better
       const ambientLight = new AmbientLight(0xffffff, 1);
       scene.add(ambientLight);
 
       for (let i = 0; i < rubyCount; i++) {
-        // Deep-clone the loaded model scene.
+        // Deep-clone the loaded model scene
         const rubyClone = gltf.scene.clone(true);
+
         // Scale up the model to make it more visible
         const scale = 1 + Math.random(); // Random scale between 1 and 2
         rubyClone.scale.set(scale, scale, scale);
 
-        // Position with more variation
+        // Position with variation
         const angle = Math.random() * Math.PI * 2;
         const radius = 5 + Math.random() * groundRadius; // Minimum 5 units from center
         const x = radius * Math.cos(angle);
@@ -133,7 +120,7 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
         const y = 1 + Math.random() * heightVariation; // Random height between 1 and 2
         rubyClone.position.set(x, y, z);
 
-        // Random rotation on all axes for more variety
+        // Random rotation on all axes
         rubyClone.rotation.x = Math.random() * Math.PI * 0.2 - 0.1; // Slight tilt
         rubyClone.rotation.y = Math.random() * Math.PI * 2; // Full rotation
         rubyClone.rotation.z = Math.random() * Math.PI * 0.2 - 0.1; // Slight tilt
