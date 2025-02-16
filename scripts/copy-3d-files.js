@@ -47,12 +47,8 @@ const formatFiles = async () => {
 
     // Always include these specific files
     const specificFiles = [
-      'hooks/use3DContext.ts',
-      'app/home.tsx'
+      'app/index.tsx'
     ];
-
-    // Get all files from components/3d recursively
-    const threeDFiles = getAllFiles(path.join(root, 'components/3d'));
 
     // Get all files from engine/ recursively
     const engineFiles = getAllFiles(path.join(root, 'engine'));
