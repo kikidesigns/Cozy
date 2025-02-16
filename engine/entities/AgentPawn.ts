@@ -16,9 +16,12 @@ export class AgentPawn extends Object3D {
   constructor() {
     super();
     const geometry = new BoxGeometry(1, 1, 1);
+    // Use MeshStandardMaterial to interact with lighting (for shadows and realistic shading)
     this.material = new MeshStandardMaterial({ color: 0x00ff00 });
     this.mesh = new Mesh(geometry, this.material);
-    // Add the mesh as a child so we can animate it independently.
+    // Enable shadow casting and receiving
+    this.mesh.castShadow = true;
+    this.mesh.receiveShadow = true;
     this.add(this.mesh);
 
     // Set the pawn's logical center at a fixed height above the ground.

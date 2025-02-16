@@ -1,5 +1,5 @@
 import { Renderer } from "expo-three"
-import { PerspectiveCamera, Scene } from "three"
+import { PCFSoftShadowMap, PerspectiveCamera, Scene } from "three"
 import { System } from "../core/System"
 
 export class RendererSystem extends System {
@@ -12,10 +12,16 @@ export class RendererSystem extends System {
     super();
     this.gl = gl;
     this.renderer = new Renderer({ gl, alpha: true });
-    this.renderer.setClearColor(0x000000, 0); // transparent background
+    // Set the clear color (you can adjust this as needed)
+    this.renderer.setClearColor(0x87ceeb, 1);
     const width = gl.drawingBufferWidth;
     const height = gl.drawingBufferHeight;
     this.renderer.setSize(width, height);
+
+    // Enable shadow mapping
+    this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.type = PCFSoftShadowMap;
+
     this.scene = scene;
     this.camera = camera;
   }
