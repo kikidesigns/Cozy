@@ -10,6 +10,8 @@ export default function GameScreen() {
   // Optionally, capture touch input handlers for overlay usage.
   const [touchHandlers, setTouchHandlers] = useState({});
 
+  console.log(engineRef)
+
   return (
     <View style={styles.container}>
       {engineRef.current && (

@@ -23,8 +23,10 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
   engine,
   onTouchHandlers,
 }) => {
+  console.log('ThreeCanvas')
   const onContextCreate = useCallback(
     async (gl: WebGLRenderingContext) => {
+      console.log('onContextCreate')
       const width = gl.drawingBufferWidth;
       const height = gl.drawingBufferHeight;
 
@@ -48,14 +50,13 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
       const lighting = new Lighting();
       sceneManager.scene.add(lighting);
 
-      // Create the agent pawn.
+      // Create the agent pawn and place it at the center.
       const pawn = new AgentPawn();
       pawn.position.set(0, 0, 0);
       sceneManager.scene.add(pawn);
 
       // Create game controller to sync camera & pawn.
       const gameController = new GameController(sceneManager.camera, pawn);
-      // Register game controller as a system.
       engine.registerSystem({
         update: (delta: number) => gameController.update(delta),
       });
