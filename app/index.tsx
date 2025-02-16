@@ -7,7 +7,7 @@ import { useGameEngine } from "@/engine/useGameEngine"
 export default function GameScreen() {
   // Initialize the global engine instance via our stateful hook.
   const engine = useGameEngine();
-  // Optionally, capture touch input handlers for overlay usage.
+  // Capture touch input handlers from ThreeCanvas.
   const [touchHandlers, setTouchHandlers] = useState({});
 
   console.log("Engine:", engine);
@@ -21,6 +21,8 @@ export default function GameScreen() {
           onTouchHandlers={setTouchHandlers}
         />
       )}
+      {/* This overlay captures touch events and passes them to the PanResponder */}
+      <View style={styles.touchOverlay} {...touchHandlers} />
       <StatusBar style="light" />
     </View>
   );
@@ -33,5 +35,9 @@ const styles = StyleSheet.create({
   },
   canvas: {
     flex: 1,
+  },
+  touchOverlay: {
+    ...StyleSheet.absoluteFillObject, // covers the entire container
+    backgroundColor: "transparent",
   },
 });
