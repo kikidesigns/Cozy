@@ -1,13 +1,13 @@
 import { StatusBar } from "expo-status-bar"
+// app/index.tsx
 import React, { useState } from "react"
 import { StyleSheet, View } from "react-native"
 import { ThreeCanvas } from "@/engine/rendering/ThreeCanvas"
+import ChatOverlay from "@/engine/ui/ChatOverlay"
 import { useGameEngine } from "@/engine/useGameEngine"
 
 export default function GameScreen() {
-  // Initialize the global engine instance via our stateful hook.
   const engine = useGameEngine();
-  // Capture touch input handlers from ThreeCanvas.
   const [touchHandlers, setTouchHandlers] = useState({});
 
   console.log("Engine:", engine);
@@ -21,8 +21,9 @@ export default function GameScreen() {
           onTouchHandlers={setTouchHandlers}
         />
       )}
-      {/* This overlay captures touch events and passes them to the PanResponder */}
       <View style={styles.touchOverlay} {...touchHandlers} />
+      {/* ChatOverlay is rendered on top of the game view */}
+      <ChatOverlay />
       <StatusBar style="light" />
     </View>
   );

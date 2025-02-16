@@ -59,7 +59,7 @@
     "react-native-webview": "13.12.5",
     "text-encoding-polyfill": "^0.6.7",
     "three": "^0.150.1",
-    "zustand": "^5.0.2"
+    "zustand": "^5.0.3"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
