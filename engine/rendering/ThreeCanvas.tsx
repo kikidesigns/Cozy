@@ -1,82 +1,53 @@
 // engine/rendering/ThreeCanvas.tsx
 import { GLView } from "expo-gl"
+import { Renderer } from "expo-three"
 import React, { useCallback } from "react"
 import { StyleSheet, View } from "react-native"
-import { BoxGeometry, Mesh, MeshBasicMaterial } from "three"
-import { GameEngine } from "../core/GameEngine"
-import { AgentPawn } from "../entities/AgentPawn"
-import { BuildingsAndSidewalks } from "../entities/BuildingsAndSidewalks"
-import { Environment } from "../entities/Environment"
-import { GameController } from "../entities/GameController"
-import { Lighting } from "../entities/Lighting"
-import { TouchInputSystem } from "../input/TouchInputSystem"
-import { RendererSystem } from "./RendererSystem"
-import { SceneManager } from "./SceneManager"
+import {
+  BoxGeometry, Color, Mesh, MeshBasicMaterial, PerspectiveCamera, Scene
+} from "three"
 
 interface ThreeCanvasProps {
   style?: any;
-  engine: GameEngine;
-  onTouchHandlers?: (handlers: any) => void;
 }
 
-export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
-  style,
-  engine,
-  onTouchHandlers,
-}) => {
-  const onContextCreate = useCallback(
-    async (gl: WebGLRenderingContext) => {
-      console.log("onContextCreate");
-      const width = gl.drawingBufferWidth;
-      const height = gl.drawingBufferHeight;
+export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({ style }) => {
+  const onContextCreate = useCallback(async (gl: WebGLRenderingContext) => {
+    // Create a basic Three.js scene
+    const scene = new Scene();
+    scene.background = new Color(0x87ceeb); // sky blue
 
-      // Create our scene and camera.
-      const sceneManager = new SceneManager(width, height);
+    // Set up a perspective camera
+    const camera = new PerspectiveCamera(
+      75,
+      gl.drawingBufferWidth / gl.drawingBufferHeight,
+      0.1,
+      1000
+    );
+    camera.position.z = 5;
 
-      // Create the renderer system and register it.
-      const rendererSystem = new RendererSystem(gl, sceneManager.scene, sceneManager.camera);
-      engine.registerSystem(rendererSystem);
+    // Create a red cube using MeshBasicMaterial (unlit)
+    const geometry = new BoxGeometry(2, 2, 2);
+    const material = new MeshBasicMaterial({ color: 0xff0000 });
+    const cube = new Mesh(geometry, material);
+    scene.add(cube);
 
-      // Set up environment.
-      const environment = new Environment();
-      environment.setScene(sceneManager.scene);
-      sceneManager.scene.add(environment);
+    // Create the renderer
+    const renderer = new Renderer({ gl });
+    renderer.setSize(gl.drawingBufferWidth, gl.drawingBufferHeight);
+    // Clear with sky blue so the scene background shows
+    renderer.setClearColor(0x87ceeb, 1);
 
-      // Add buildings and sidewalks.
-      const buildings = new BuildingsAndSidewalks();
-      sceneManager.scene.add(buildings);
-
-      // Add lighting.
-      const lighting = new Lighting();
-      sceneManager.scene.add(lighting);
-
-      // Create the agent pawn and place it at the center.
-      const pawn = new AgentPawn();
-      pawn.position.set(0, 1, 0); // Raise pawn a bit above ground
-      sceneManager.scene.add(pawn);
-
-      // **Add a test cube** with MeshBasicMaterial (always visible)
-      const testCube = new Mesh(
-        new BoxGeometry(2, 2, 2),
-        new MeshBasicMaterial({ color: 0xff0000 })
-      );
-      testCube.position.set(0, 2, 0); // Position above the ground so it’s visible
-      sceneManager.scene.add(testCube);
-
-      // Create game controller to sync camera & pawn.
-      const gameController = new GameController(sceneManager.camera, pawn);
-      engine.registerSystem({
-        update: (delta: number) => gameController.update(delta),
-      });
-
-      // Set up touch input.
-      const touchInput = new TouchInputSystem(gameController);
-      if (onTouchHandlers) {
-        onTouchHandlers(touchInput.panResponder.panHandlers);
-      }
-    },
-    [engine, onTouchHandlers]
-  );
+    // Minimal render loop
+    const render = () => {
+      requestAnimationFrame(render);
+      cube.rotation.x += 0.01;
+      cube.rotation.y += 0.01;
+      renderer.render(scene, camera);
+      if (gl.endFrameEXP) gl.endFrameEXP();
+    };
+    render();
+  }, []);
 
   return (
     <View style={[styles.container, style]}>
@@ -88,7 +59,6 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    overflow: "hidden",
   },
   glView: {
     flex: 1,
