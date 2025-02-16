@@ -1,10 +1,8 @@
 // engine/rendering/ThreeCanvas.tsx
 import { GLView } from "expo-gl"
-import { Renderer } from "expo-three"
 import React, { useCallback } from "react"
 import { StyleSheet, View } from "react-native"
-import { Color, PerspectiveCamera, Scene } from "three"
-import { GameEngine } from "../core/GameEngine"
+import { AmbientLight, Color, PerspectiveCamera, Scene } from "three"
 import { AgentPawn } from "../entities/AgentPawn"
 import { BuildingsAndSidewalks } from "../entities/BuildingsAndSidewalks"
 import { Environment } from "../entities/Environment"
@@ -12,10 +10,11 @@ import { GameController } from "../entities/GameController"
 import { Ground } from "../entities/Ground"
 import { Lighting } from "../entities/Lighting"
 import { TouchInputSystem } from "../input/TouchInputSystem"
+import { RendererSystem } from "./RendererSystem" // Import the RendererSystem
 
 interface ThreeCanvasProps {
   style?: any;
-  engine: GameEngine;
+  engine: any;
   onTouchHandlers?: (handlers: any) => void;
 }
 
@@ -37,20 +36,8 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
     camera.position.set(0, 8, 15);
     camera.lookAt(0, 0, 0);
 
-    // Create the renderer.
-    const renderer = new Renderer({ gl, alpha: true });
-    renderer.setSize(width, height);
-    renderer.setClearColor(0x87ceeb, 1);
-
-    // Register the renderer system.
-    const rendererSystem = {
-      update: (delta: number) => {
-        renderer.render(scene, camera);
-        if ((gl as any).endFrameEXP) {
-          (gl as any).endFrameEXP();
-        }
-      },
-    };
+    // Use the RendererSystem from our engine instead of an inline renderer.
+    const rendererSystem = new RendererSystem(gl, scene, camera);
     engine.registerSystem(rendererSystem);
 
     // Add the ground.
@@ -67,7 +54,7 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
     scene.add(environment);
 
     // Add lighting.
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1);
+    const ambientLight = new AmbientLight(0xffffff, 1);
     scene.add(ambientLight);
     const lighting = new Lighting();
     scene.add(lighting);
@@ -76,7 +63,7 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
     const pawn = new AgentPawn();
     // Spawn the pawn on grass next to the center building (e.g., x = -6)
     pawn.position.set(-6, 1, 0);
-    // **Update the pawn's target to its current position**
+    // Update the pawn's target to its current position.
     pawn.moveTo(pawn.position.clone());
     scene.add(pawn);
 
