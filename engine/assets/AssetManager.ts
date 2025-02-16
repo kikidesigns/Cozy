@@ -80,8 +80,8 @@ export class AssetManager {
       console.log("AssetManager: Loading from clean URI:", cleanUri);
 
       // Load the model
-      const loadPromise = new Promise((resolve, reject) => {
-        try {
+      try {
+        const gltf = await new Promise((resolve, reject) => {
           loader.load(
             cleanUri,
             (gltf) => {
@@ -117,23 +117,8 @@ export class AssetManager {
               reject(error);
             }
           );
-        } catch (error) {
-          console.error("AssetManager: Exception during GLB loading:", error);
-          reject(error);
-        }
-      });
+        });
 
-      // Create a timeout promise
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => {
-          console.error("AssetManager: Model load timed out after 30 seconds");
-          reject(new Error("Model load timeout"));
-        }, 30000);  // 30 second timeout for loading
-      });
-
-      try {
-        // Wait for either the load or timeout
-        const gltf = await Promise.race([loadPromise, timeoutPromise]);
         this.assets.set(cacheKey, gltf);
         return gltf;
       } catch (error) {

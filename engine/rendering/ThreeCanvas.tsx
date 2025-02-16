@@ -128,16 +128,16 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
       towerClone.scale.set(scale, scale, scale);
 
       // Position tower 5 units away from starting point (-6, 1, 0)
-      const x = -1; // 5 units right from -6
-      const z = 0;  // Same Z as starting point
+      const x = -18; // 5 units right from -6
+      const z = -13;  // Same Z as starting point
       const y = 0;  // Place directly on ground
       towerClone.position.set(x, y, z);
 
       // Make tower face the starting point
-      const startPoint = new Vector3(-6, 0, 0);
+      const startPoint = new Vector3(-2, 0, 12);
       towerClone.lookAt(startPoint);
       // Rotate 180 degrees since we want the front to face the starting point
-      towerClone.rotation.y += Math.PI;
+      towerClone.rotation.y -= Math.PI * 0.8;
 
       scene.add(towerClone);
       console.log(
