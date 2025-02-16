@@ -12,7 +12,7 @@ export class Ground extends Object3D {
     const geometry = new CircleGeometry(radius, segments);
 
     const material = new MeshStandardMaterial({
-      color: Colors.grassGreen || "#228B22",
+      color: 0x4F7942, // A softer, more natural sage green
       metalness: 0,
       roughness: 1,
       side: DoubleSide,

@@ -6,11 +6,11 @@ export class Environment extends Object3D {
   }
 
   setScene(scene: Scene) {
-    // Use a warm sunset color for both the sky and fog.
-    const sunsetColorHex = 0xFF8C00; // dark orange
-    const sunsetColor = new Color(sunsetColorHex);
-    scene.background = sunsetColor;
-    scene.fog = new FogExp2(sunsetColorHex, 0.005);
+    // Use a light blue color for both the sky and fog.
+    const skyColorHex = 0x87CEEB; // light blue
+    const skyColor = new Color(skyColorHex);
+    scene.background = skyColor;
+    scene.fog = new FogExp2(skyColorHex, 0.005);
   }
 
   update(delta: number) {
