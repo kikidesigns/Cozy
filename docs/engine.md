@@ -103,6 +103,7 @@ Designing for modularity means each subsystem is loosely coupled and can be main
 ## Example Project Structure
 Below is an example file/folder hierarchy for a game engine following these best practices. Each folder represents a major system or module of the engine, containing the code (classes, scripts) for that aspect. This organization emphasizes separation of concerns, making the engine maintainable and scalable:
 
+```
 GameEngine/
 ├── **Core/** – Core utilities and engine loop (math library, memory, time, events, base engine classes). Handles initialization and ties other systems together.
 ├── **Rendering/** – Rendering engine module (wrapper around Three.js WebGLRenderer, material/shader management, cameras, lighting). Responsible for drawing scenes.
@@ -117,3 +118,4 @@ GameEngine/
 ├── **Audio/** – Audio engine module. Manages sound playback, audio sources, and listener. Could be merged with Assets or kept separate for clarity (e.g., using Web Audio API or Three.js Audio).
 ├── **Debug/** (or **Tools/**) – Telemetry and debugging utilities. Logging framework, debug drawing tools, performance profilers, and possibly an in-game console or editor tools.
 └── **Engine.jsx** (entry point) – The main file that initializes the engine. It would set up all subsystems (creating instances of the above modules), then enter the main loop (for a browser, `requestAnimationFrame` loop). This could also reside in Core.
+```
