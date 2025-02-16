@@ -35,7 +35,7 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
 
     // Set up a perspective camera.
     const camera = new PerspectiveCamera(60, width / height, 0.1, 1000);
-    camera.position.set(0, 8, 15);
+    camera.position.set(0, 15, 30);  // Moved back and up for a better view
     camera.lookAt(0, 0, 0);
     console.log("Camera created at:", camera.position);
 
@@ -90,6 +90,20 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
     // --- NEW: Load a local GLTF/GLB model ("ruby") and add multiple copies ---
     const assetManager = new AssetManager();
     try {
+      // Load the villa first
+      console.log("Loading villa model...");
+      const villa = await assetManager.loadModel(
+        require("../../assets/models/villa/scene.gltf")
+      );
+      console.log("Villa model loaded successfully");
+
+      // Position and scale the villa
+      villa.scene.scale.set(0.5, 0.5, 0.5);  // Smaller scale
+      villa.scene.position.set(0, 0, -20);    // Further back
+      villa.scene.rotation.y = Math.PI;       // Rotate to face forward
+      scene.add(villa.scene);
+
+      // Now load and scatter the rubies
       console.log("Loading ruby model...");
       const gltf = await assetManager.loadModel(
         require("../../assets/models/ruby-v1.glb")
