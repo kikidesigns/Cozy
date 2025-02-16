@@ -1,4 +1,3 @@
-// engine/rendering/ThreeCanvas.tsx
 import { GLView } from "expo-gl"
 import React, { useCallback } from "react"
 import { StyleSheet, View } from "react-native"
@@ -73,7 +72,7 @@ export const ThreeCanvas: React.FC<{
       });
       console.log("GameController registered");
 
-      // Set up touch input handling (pass the scene so we can raycast).
+      // Set up touch input handling.
       const touchInput = new TouchInputSystem(gameController, scene);
       if (onTouchHandlers) {
         onTouchHandlers(touchInput.panResponder.panHandlers);
