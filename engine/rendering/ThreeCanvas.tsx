@@ -1,155 +1,145 @@
+// engine/rendering/ThreeCanvas.tsx
 import { GLView } from "expo-gl"
 import React, { useCallback } from "react"
 import { StyleSheet, View } from "react-native"
 import { AmbientLight, Color, PerspectiveCamera, Scene, Vector3 } from "three"
-import { AssetManager } from "../assets/AssetManager" // Updated asset manager
+import { AssetManager } from "../assets/AssetManager"
 import { AgentPawn } from "../entities/AgentPawn"
 import { BuildingsAndSidewalks } from "../entities/BuildingsAndSidewalks"
 import { Environment } from "../entities/Environment"
 import { GameController } from "../entities/GameController"
 import { Ground } from "../entities/Ground"
 import { Lighting } from "../entities/Lighting"
+import { NpcAgent } from "../entities/NpcAgent" // NEW: NPC agent
 import { TouchInputSystem } from "../input/TouchInputSystem"
 import { RendererSystem } from "./RendererSystem"
 
-interface ThreeCanvasProps {
+export const ThreeCanvas: React.FC<{
   style?: any;
   engine: any;
   onTouchHandlers?: (handlers: any) => void;
-}
+}> = ({ style, engine, onTouchHandlers }) => {
+  const onContextCreate = useCallback(
+    async (gl: WebGLRenderingContext) => {
+      console.log("onContextCreate: GL context created");
+      const width = gl.drawingBufferWidth;
+      const height = gl.drawingBufferHeight;
 
-export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
-  style,
-  engine,
-  onTouchHandlers,
-}) => {
-  const onContextCreate = useCallback(async (gl: WebGLRenderingContext) => {
-    console.log("onContextCreate: GL context created");
-    const width = gl.drawingBufferWidth;
-    const height = gl.drawingBufferHeight;
+      // Create a Three.js scene.
+      const scene = new Scene();
+      scene.background = new Color(0x87ceeb);
+      console.log("Scene created");
 
-    // Create a Three.js scene with a sky-blue background.
-    const scene = new Scene();
-    scene.background = new Color(0x87ceeb);
-    console.log("Scene created");
+      // Set up a perspective camera.
+      const camera = new PerspectiveCamera(60, width / height, 0.1, 1000);
+      camera.position.set(0, 15, 30);
+      camera.lookAt(0, 0, 0);
+      console.log("Camera created at:", camera.position);
 
-    // Set up a perspective camera.
-    const camera = new PerspectiveCamera(60, width / height, 0.1, 1000);
-    camera.position.set(0, 15, 30);  // Moved back and up for a better view
-    camera.lookAt(0, 0, 0);
-    console.log("Camera created at:", camera.position);
+      // Set up the renderer.
+      const rendererSystem = new RendererSystem(gl, scene, camera);
+      engine.registerSystem(rendererSystem);
+      console.log("RendererSystem registered");
 
-    // Use our RendererSystem from the engine.
-    const rendererSystem = new RendererSystem(gl, scene, camera);
-    engine.registerSystem(rendererSystem);
-    console.log("RendererSystem registered");
+      // Add static scene elements.
+      const ground = new Ground();
+      scene.add(ground);
+      console.log("Ground added");
 
-    // Add static scene elements.
-    const ground = new Ground();
-    scene.add(ground);
-    console.log("Ground added");
+      const environment = new Environment();
+      environment.setScene(scene);
+      scene.add(environment);
+      console.log("Environment set");
 
-    // const buildings = new BuildingsAndSidewalks();
-    // scene.add(buildings);
-    // console.log("Buildings added");
+      const ambientLight = new AmbientLight(0xffffff, 1);
+      scene.add(ambientLight);
+      console.log("Ambient light added");
 
-    const environment = new Environment();
-    environment.setScene(scene);
-    scene.add(environment);
-    console.log("Environment set");
+      const lighting = new Lighting();
+      scene.add(lighting);
+      console.log("Directional lighting added");
 
-    const ambientLight = new AmbientLight(0xffffff, 1);
-    scene.add(ambientLight);
-    console.log("Ambient light added");
+      // Create the player pawn.
+      const pawn = new AgentPawn();
+      pawn.position.set(-6, 1, 0);
+      pawn.moveTo(pawn.position.clone());
+      scene.add(pawn);
+      console.log("AgentPawn added");
 
-    const lighting = new Lighting();
-    scene.add(lighting);
-    console.log("Directional lighting added");
-
-    // Create the AgentPawn.
-    const pawn = new AgentPawn();
-    pawn.position.set(-6, 1, 0);
-    pawn.moveTo(pawn.position.clone());
-    scene.add(pawn);
-    console.log("AgentPawn added");
-
-    // Create a game controller to update the camera relative to the pawn.
-    const gameController = new GameController(camera, pawn);
-    engine.registerSystem({
-      update: (delta: number) => gameController.update(delta),
-    });
-    console.log("GameController registered");
-
-    // Set up touch input handling.
-    const touchInput = new TouchInputSystem(gameController);
-    if (onTouchHandlers) {
-      onTouchHandlers(touchInput.panResponder.panHandlers);
-    }
-    console.log("TouchInputSystem registered");
-
-    // --- NEW: Load and scatter ruby and tower models ---
-    const assetManager = new AssetManager();
-    try {
-      // Load ruby model
-      // console.log("Loading ruby model...");
-      // const rubyGltf = await assetManager.loadModel(
-      //   require("../../assets/models/ruby-v1.glb")
-      // );
-      // console.log("Ruby model loaded successfully.");
-
-      // Load tower model
-      console.log("Loading tower model...");
-      const towerGltf = await assetManager.loadModel(
-        require("../../assets/models/tower.glb")
-      );
-      console.log("Tower model loaded successfully.");
-
-      // Remove redundant ambient light - we already have lighting from Lighting class
-      // const ambientLight = new AmbientLight(0xffffff, 1);
-      // scene.add(ambientLight);
-
-      // Place single tower
-      const towerClone = towerGltf.scene.clone(true);
-
-      // Enable shadows for the tower and all its child meshes
-      towerClone.traverse((child: any) => {
-        if (child.isMesh) {
-          child.castShadow = true;
-          child.receiveShadow = true;
-          // Ensure materials are set up for proper lighting
-          if (child.material) {
-            child.material.needsUpdate = true;
-          }
-        }
+      // Create a game controller.
+      const gameController = new GameController(camera, pawn);
+      engine.registerSystem({
+        update: (delta: number) => gameController.update(delta),
       });
+      console.log("GameController registered");
 
-      // Scale the tower to a fixed size
-      const scale = 2;
-      towerClone.scale.set(scale, scale, scale);
+      // Set up touch input handling (pass the scene so we can raycast).
+      const touchInput = new TouchInputSystem(gameController, scene);
+      if (onTouchHandlers) {
+        onTouchHandlers(touchInput.panResponder.panHandlers);
+      }
+      console.log("TouchInputSystem registered");
 
-      // Position tower 5 units away from starting point (-6, 1, 0)
-      const x = -18; // 5 units right from -6
-      const z = -13;  // Same Z as starting point
-      const y = 0;  // Place directly on ground
-      towerClone.position.set(x, y, z);
+      // --- Load and place the tower model ---
+      const assetManager = new AssetManager();
+      try {
+        console.log("Loading tower model...");
+        const towerGltf = await assetManager.loadModel(
+          require("../../assets/models/tower.glb")
+        );
+        console.log("Tower model loaded successfully.");
 
-      // Make tower face the starting point
-      const startPoint = new Vector3(-2, 0, 12);
-      towerClone.lookAt(startPoint);
-      // Rotate 180 degrees since we want the front to face the starting point
-      towerClone.rotation.y -= Math.PI * 0.8;
+        const towerClone = towerGltf.scene.clone(true);
+        towerClone.traverse((child: any) => {
+          if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+            if (child.material) {
+              child.material.needsUpdate = true;
+            }
+          }
+        });
 
-      scene.add(towerClone);
-      console.log(
-        `Tower placed at position (${x.toFixed(2)}, ${y.toFixed(2)}, ${z.toFixed(
-          2
-        )}), scale: ${scale.toFixed(2)}`
-      );
-    } catch (error) {
-      console.error("Error loading models:", error);
-    }
-    // --- END NEW ---
-  }, [engine, onTouchHandlers]);
+        const scale = 2;
+        towerClone.scale.set(scale, scale, scale);
+        const x = -18;
+        const z = -13;
+        const y = 0;
+        towerClone.position.set(x, y, z);
+
+        const startPoint = new Vector3(-2, 0, 12);
+        towerClone.lookAt(startPoint);
+        towerClone.rotation.y -= Math.PI * 0.8;
+        scene.add(towerClone);
+        console.log(
+          `Tower placed at (${x.toFixed(
+            2
+          )}, ${y.toFixed(2)}, ${z.toFixed(2)}), scale: ${scale.toFixed(2)}`
+        );
+      } catch (error) {
+        console.error("Error loading tower model:", error);
+      }
+      // --- END TOWER ---
+
+      // --- Spawn 2 NPC agents in front of the tower ---
+      const npc1 = new NpcAgent();
+      const npc2 = new NpcAgent();
+      npc1.position.set(-17, 1, -10);
+      npc2.position.set(-19, 1, -10);
+      scene.add(npc1);
+      scene.add(npc2);
+      console.log("NPC agents added to the scene.");
+
+      engine.registerSystem({
+        update: (delta: number) => {
+          npc1.update(delta);
+          npc2.update(delta);
+        },
+      });
+      console.log("NPC agents update system registered.");
+    },
+    [engine, onTouchHandlers]
+  );
 
   return (
     <View style={[styles.container, style]}>
