@@ -1,3 +1,4 @@
+// engine/input/TouchInputSystem.ts
 import {
   Dimensions, GestureResponderEvent, PanResponder, PanResponderGestureState
 } from "react-native"
@@ -26,13 +27,18 @@ export class TouchInputSystem {
           console.log(
             `[TouchInput] Tap detected at: screen (${locationX.toFixed(
               1
-            )}, ${locationY.toFixed(1)}) / ndc (${ndcX.toFixed(2)}, ${ndcY.toFixed(2)})`
+            )}, ${locationY.toFixed(1)}) / ndc (${ndcX.toFixed(
+              2
+            )}, ${ndcY.toFixed(2)})`
           );
           const pointer = new THREE.Vector2(ndcX, ndcY);
           const raycaster = new THREE.Raycaster();
           raycaster.setFromCamera(pointer, this.gameController.camera);
 
-          const intersects = raycaster.intersectObjects(this.scene.children, true);
+          const intersects = raycaster.intersectObjects(
+            this.scene.children,
+            true
+          );
           console.log(`[TouchInput] Number of intersects: ${intersects.length}`);
           let interactionHandled = false;
           if (intersects.length > 0) {
@@ -46,6 +52,7 @@ export class TouchInputSystem {
                 console.log("[TouchInput] Skipping object due to ignoreRaycast flag.");
                 continue;
               }
+
               // Check if the object is a menu button.
               if (intersect.object.userData.interactionOption) {
                 const option = intersect.object.userData.interactionOption;
@@ -63,9 +70,11 @@ export class TouchInputSystem {
                   break;
                 }
               }
+
               // Check if the object is an NPC.
               if (intersect.object.userData.isNpc) {
                 console.log("[TouchInput] NPC object hit!");
+                // Traverse upward until we find an object that implements startInteraction.
                 let npc = intersect.object;
                 while (npc && typeof npc.startInteraction !== "function" && npc.parent) {
                   npc = npc.parent;
@@ -85,9 +94,13 @@ export class TouchInputSystem {
             console.log("[TouchInput] No interactable hit; moving player pawn.");
             const vector = new THREE.Vector3(ndcX, ndcY, 0.5);
             vector.unproject(this.gameController.camera);
-            const dir = vector.sub(this.gameController.camera.position).normalize();
+            const dir = vector
+              .sub(this.gameController.camera.position)
+              .normalize();
             const distance = -this.gameController.camera.position.y / dir.y;
-            const target = this.gameController.camera.position.clone().add(dir.multiplyScalar(distance));
+            const target = this.gameController.camera.position
+              .clone()
+              .add(dir.multiplyScalar(distance));
             this.gameController.movePawnTo(target);
           }
         }
