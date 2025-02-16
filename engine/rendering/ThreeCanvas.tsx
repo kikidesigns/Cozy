@@ -2,6 +2,7 @@
 import { GLView } from "expo-gl"
 import React, { useCallback } from "react"
 import { StyleSheet, View } from "react-native"
+import { BoxGeometry, Mesh, MeshBasicMaterial } from "three"
 import { GameEngine } from "../core/GameEngine"
 import { AgentPawn } from "../entities/AgentPawn"
 import { BuildingsAndSidewalks } from "../entities/BuildingsAndSidewalks"
@@ -23,10 +24,9 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
   engine,
   onTouchHandlers,
 }) => {
-  console.log('ThreeCanvas')
   const onContextCreate = useCallback(
     async (gl: WebGLRenderingContext) => {
-      console.log('onContextCreate')
+      console.log("onContextCreate");
       const width = gl.drawingBufferWidth;
       const height = gl.drawingBufferHeight;
 
@@ -52,8 +52,16 @@ export const ThreeCanvas: React.FC<ThreeCanvasProps> = ({
 
       // Create the agent pawn and place it at the center.
       const pawn = new AgentPawn();
-      pawn.position.set(0, 0, 0);
+      pawn.position.set(0, 1, 0); // Raise pawn a bit above ground
       sceneManager.scene.add(pawn);
+
+      // **Add a test cube** with MeshBasicMaterial (always visible)
+      const testCube = new Mesh(
+        new BoxGeometry(2, 2, 2),
+        new MeshBasicMaterial({ color: 0xff0000 })
+      );
+      testCube.position.set(0, 2, 0); // Position above the ground so it’s visible
+      sceneManager.scene.add(testCube);
 
       // Create game controller to sync camera & pawn.
       const gameController = new GameController(sceneManager.camera, pawn);
