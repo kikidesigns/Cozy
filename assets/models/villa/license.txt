@@ -1,0 +1,11 @@
+Model Information:
+* title:	Low Poly Ancient Roman Villa
+* source:	https://sketchfab.com/3d-models/low-poly-ancient-roman-villa-475fbafbed4843fa8bd003c65ef2cccc
+* author:	lexferreira89 (https://sketchfab.com/lexferreira89)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Low Poly Ancient Roman Villa" (https://sketchfab.com/3d-models/low-poly-ancient-roman-villa-475fbafbed4843fa8bd003c65ef2cccc) by lexferreira89 (https://sketchfab.com/lexferreira89) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

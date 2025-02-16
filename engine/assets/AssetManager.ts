@@ -1,7 +1,7 @@
 import { Asset } from "expo-asset"
+import * as FileSystem from "expo-file-system"
 import { TextureLoader } from "expo-three"
 import * as THREE from "three"
-import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader"
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader"
 
 type AssetSource = number | string;
@@ -46,8 +46,6 @@ export class AssetManager {
 
   /**
    * Loads a GLTF/GLB model and returns the parsed result.
-   * Provides a DRACOLoader to decode Draco-compressed models.
-   * Includes a timeout in case loading hangs.
    */
   async loadModel(source: AssetSource): Promise<any> {
     const cacheKey = typeof source === "string" ? source : source.toString();
@@ -55,60 +53,62 @@ export class AssetManager {
       console.log("AssetManager: Returning cached model for", cacheKey);
       return this.assets.get(cacheKey);
     }
+
     console.log("AssetManager: Resolving model asset...");
-    const asset = await this.resolveAsset(source);
-    console.log(
-      "AssetManager: Asset resolved. localUri:",
-      asset.localUri,
-      "uri:",
-      asset.uri
-    );
-    const assetUri = asset.localUri || asset.uri;
+    const modelAsset = await this.resolveAsset(source);
+    const modelUri = modelAsset.localUri || modelAsset.uri;
 
-    // Create the GLTFLoader and set up DRACOLoader for compressed data.
+    // Check if this is a GLB file
+    const isGlb = modelUri.toLowerCase().endsWith('.glb');
+
+    // Create the GLTFLoader
     const loader = new GLTFLoader();
-    const dracoLoader = new DRACOLoader();
-    dracoLoader.setDecoderPath("https://www.gstatic.com/draco/v1/decoders/");
-    dracoLoader.preload(); // Preload the decoder files
-    loader.setDRACOLoader(dracoLoader);
-    console.log("AssetManager: Starting model load from:", assetUri);
+    console.log("AssetManager: Starting model load from:", modelUri);
 
-    // Create a promise for the GLTF load with progress logging.
-    const gltfPromise = new Promise((resolve, reject) => {
+    // Create a promise for the GLTF/GLB load with progress logging
+    const loadPromise = new Promise((resolve, reject) => {
       loader.load(
-        assetUri,
-        (gltf) => {
-          console.log("AssetManager: GLTF loaded successfully.");
+        modelUri,
+        async (gltf) => {
+          console.log("AssetManager: Model loaded successfully.");
+          console.log("AssetManager: Model details:", {
+            animations: gltf.animations.length,
+            scenes: gltf.scenes.length,
+            materials: gltf.scene.children.length,
+            position: gltf.scene.position,
+            scale: gltf.scene.scale,
+          });
+
+          // Ensure the model is visible by default
+          gltf.scene.position.set(0, 0, 0);  // Center the model
+          gltf.scene.scale.set(1, 1, 1);     // Reset scale to 1
+
           resolve(gltf);
         },
         (progressEvent) => {
           if (progressEvent.total) {
             const percent = (progressEvent.loaded / progressEvent.total) * 100;
-            console.log(
-              `AssetManager: Loading progress: ${percent.toFixed(2)}%`
-            );
+            console.log(`AssetManager: Loading progress: ${percent.toFixed(2)}%`);
           } else {
-            console.log(
-              `AssetManager: Loaded ${progressEvent.loaded} bytes...`
-            );
+            console.log(`AssetManager: Loaded ${progressEvent.loaded} bytes...`);
           }
         },
         (error) => {
-          console.error("AssetManager: Error loading GLTF model:", error);
+          console.error("AssetManager: Error loading model:", error);
           reject(error);
         }
       );
     });
 
-    // Create a timeout promise (e.g., 30 seconds).
+    // Create a timeout promise
     const timeoutPromise = new Promise((resolve, reject) => {
       setTimeout(() => {
-        reject(new Error("GLTF load timeout"));
+        reject(new Error("Model load timeout"));
       }, 30000);
     });
 
-    // Wait for either the GLTF load or timeout.
-    const gltf = await Promise.race([gltfPromise, timeoutPromise]);
+    // Wait for either the load or timeout
+    const gltf = await Promise.race([loadPromise, timeoutPromise]);
     this.assets.set(cacheKey, gltf);
     return gltf;
   }
