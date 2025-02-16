@@ -1,6 +1,7 @@
 export const Colors = {
   skyBlue: "#87ceeb",
-  grassGreen: "#228B22",
+  // darker
+  grassGreen: "#006400",
   orangeBrown: "#D2691E",
   lightBeige: "#F5F5DC",
 };

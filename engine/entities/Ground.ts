@@ -2,7 +2,7 @@
 import {
   CircleGeometry, DoubleSide, Mesh, MeshStandardMaterial, Object3D
 } from "three"
-import { Colors } from "../../constants/Colors"
+import { Colors } from "../constants/Colors"
 
 export class Ground extends Object3D {
   constructor() {

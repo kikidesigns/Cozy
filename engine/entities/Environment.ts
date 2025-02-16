@@ -1,7 +1,4 @@
 import { Color, FogExp2, Object3D, Scene } from "three"
-import { Colors } from "../../constants/Colors"
-
-const colorToHex = (color: string) => parseInt(color.replace('#', '0x'));
 
 export class Environment extends Object3D {
   constructor() {
@@ -9,9 +6,11 @@ export class Environment extends Object3D {
   }
 
   setScene(scene: Scene) {
-    const skyColor = new Color(colorToHex(Colors.skyBlue));
-    scene.background = skyColor;
-    scene.fog = new FogExp2(colorToHex(Colors.skyBlue), 0.005);
+    // Use a warm sunset color for both the sky and fog.
+    const sunsetColorHex = 0xFF8C00; // dark orange
+    const sunsetColor = new Color(sunsetColorHex);
+    scene.background = sunsetColor;
+    scene.fog = new FogExp2(sunsetColorHex, 0.005);
   }
 
   update(delta: number) {
