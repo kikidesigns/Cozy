@@ -1,18 +1,26 @@
 import { StatusBar } from "expo-status-bar"
-import React from "react"
+import React, { useState } from "react"
 import { StyleSheet, View } from "react-native"
-import { useGameEngine } from "@/engine"
-import { ThreeCanvas } from "../components/3d/ThreeCanvas"
+import { ThreeCanvas } from "@/engine/rendering/ThreeCanvas"
+import { useGameEngine } from "@/engine/useGameEngine"
 
 export default function GameScreen() {
-  // This hook starts the engine lifecycle (e.g. for shared systems, logging, etc.)
-  // Even though ThreeCanvas creates its own engine instance,
-  // this demonstrates how to integrate global engine functionality.
+  // Initialize the global engine instance via our hook.
   const engineRef = useGameEngine();
+  // Optionally, capture touch input handlers for overlay usage.
+  const [touchHandlers, setTouchHandlers] = useState({});
 
   return (
     <View style={styles.container}>
-      <ThreeCanvas style={styles.canvas} />
+      {engineRef.current && (
+        <ThreeCanvas
+          style={styles.canvas}
+          engine={engineRef.current}
+          onTouchHandlers={setTouchHandlers}
+        />
+      )}
+      {/* Optionally overlay StatusBar */}
+      <StatusBar style="light" />
     </View>
   );
 }
@@ -20,7 +28,7 @@ export default function GameScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000', // Fallback background color.
+    backgroundColor: "#000", // Fallback background color.
   },
   canvas: {
     flex: 1,
