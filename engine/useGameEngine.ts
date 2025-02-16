@@ -1,17 +1,18 @@
-import { useEffect, useRef } from "react"
+import { useEffect, useState } from "react"
 import { GameEngine } from "./core/GameEngine"
 
 export const useGameEngine = () => {
-  const engineRef = useRef<GameEngine>();
+  const [engine, setEngine] = useState<GameEngine | null>(null);
 
   useEffect(() => {
-    engineRef.current = new GameEngine();
-    engineRef.current.start();
+    const engineInstance = new GameEngine();
+    setEngine(engineInstance);
+    engineInstance.start();
 
     return () => {
-      engineRef.current?.stop();
+      engineInstance.stop();
     };
   }, []);
 
-  return engineRef;
+  return engine;
 };

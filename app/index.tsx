@@ -5,23 +5,22 @@ import { ThreeCanvas } from "@/engine/rendering/ThreeCanvas"
 import { useGameEngine } from "@/engine/useGameEngine"
 
 export default function GameScreen() {
-  // Initialize the global engine instance via our hook.
-  const engineRef = useGameEngine();
+  // Initialize the global engine instance via our stateful hook.
+  const engine = useGameEngine();
   // Optionally, capture touch input handlers for overlay usage.
   const [touchHandlers, setTouchHandlers] = useState({});
 
-  console.log(engineRef)
+  console.log("Engine:", engine);
 
   return (
     <View style={styles.container}>
-      {engineRef.current && (
+      {engine && (
         <ThreeCanvas
           style={styles.canvas}
-          engine={engineRef.current}
+          engine={engine}
           onTouchHandlers={setTouchHandlers}
         />
       )}
-      {/* Optionally overlay StatusBar */}
       <StatusBar style="light" />
     </View>
   );
