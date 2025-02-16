@@ -1,8 +1,7 @@
-import { create } from 'zustand';
-import { NostrKeys } from './nostr';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { nostr } from './nostr';
-import { NostrRelay } from './relay';
+import { create } from "zustand"
+import AsyncStorage from "@react-native-async-storage/async-storage"
+import { nostr, NostrKeys } from "./nostr"
+import { NostrRelay } from "./relay"
 
 interface NostrState {
   keys: NostrKeys | null;
@@ -34,23 +33,23 @@ export const useNostrStore = create<NostrState>((set, get) => ({
       // Derive keys from nsec
       const keys = await nostr.deriveKeysFromNsec(nsec);
       console.log('[NostrStore] Keys derived:', { npub: keys.npub });
-      
+
       // Save keys
       set({ keys, initialized: true, error: null });
-      
+
       // Store nsec in AsyncStorage
       await AsyncStorage.setItem('@cozy_nsec', nsec);
       console.log('[NostrStore] Nsec stored in AsyncStorage');
 
       // Initialize relay after keys are set
       await get().initializeRelay();
-      
+
       return true;
     } catch (error) {
       console.error('[NostrStore] Initialization error:', error);
-      set({ 
+      set({
         error: error instanceof Error ? error.message : 'Failed to initialize Nostr',
-        initialized: false 
+        initialized: false
       });
       return false;
     }
@@ -61,16 +60,16 @@ export const useNostrStore = create<NostrState>((set, get) => ({
       console.log('[NostrStore] Generating new keys...');
       // Generate new keys
       const keys = await nostr.generateNewKeys();
-      console.log('[NostrStore] Keys generated:', { 
+      console.log('[NostrStore] Keys generated:', {
         npub: keys.npub,
         hasMnemonic: !!keys.mnemonic,
         mnemonicLength: keys.mnemonic?.split(' ').length
       });
-      
+
       // Save keys
       set({ keys, initialized: true, error: null });
       console.log('[NostrStore] Keys saved to state');
-      
+
       // Store nsec and mnemonic in AsyncStorage
       await AsyncStorage.setItem('@cozy_nsec', keys.nsec);
       if (keys.mnemonic) {
@@ -80,7 +79,7 @@ export const useNostrStore = create<NostrState>((set, get) => ({
 
       // Initialize relay after keys are set
       await get().initializeRelay();
-      
+
       return true;
     } catch (error) {
       console.error('[NostrStore] Key generation error:', error);
@@ -100,10 +99,10 @@ export const useNostrStore = create<NostrState>((set, get) => ({
       if (relay) {
         relay.cleanup();
       }
-      
+
       // Clear keys from state
       set({ keys: null, relay: null, initialized: false, error: null });
-      
+
       // Clear storage
       await AsyncStorage.multiRemove([
         '@cozy_nsec',
@@ -127,7 +126,7 @@ export const useNostrStore = create<NostrState>((set, get) => ({
       console.log('[NostrStore] Relay initialized');
     } catch (error) {
       console.error('[NostrStore] Relay initialization error:', error);
-      set({ 
+      set({
         error: error instanceof Error ? error.message : 'Failed to initialize relay'
       });
     }
