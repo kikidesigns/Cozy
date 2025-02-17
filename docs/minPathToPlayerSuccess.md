@@ -1,5 +1,5 @@
 ## Cozy MVP: Core Experience & Value Proposition
-
+:)
 ### Overview
 Cozy is a Bitcoin-powered social game where players earn sats by engaging in a fun, interactive environment. It blends real-time chat with AI-driven demo agents—acting as engaging brand reps from Bitcoin startups—to create a lively, dynamic gameplay experience.
 
