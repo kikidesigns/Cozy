@@ -1,7 +1,9 @@
+// engine/rendering/ThreeCanvas.tsx
 import { GLView } from "expo-gl"
 import React, { useCallback } from "react"
 import { StyleSheet, View } from "react-native"
 import { AmbientLight, Color, PerspectiveCamera, Scene, Vector3 } from "three"
+import { getProfile } from "../../utils/auth" // Used to update the player’s balance
 import { AssetManager } from "../assets/AssetManager"
 import { AgentPawn } from "../entities/AgentPawn"
 import { BuildingsAndSidewalks } from "../entities/BuildingsAndSidewalks"
@@ -65,6 +67,13 @@ export const ThreeCanvas: React.FC<{
       scene.add(pawn);
       console.log("AgentPawn added");
 
+      // Update the player pawn’s balance after fetching profile info.
+      getProfile()
+        .then((profile) => {
+          pawn.updateBalance(profile.bitcoin_balance);
+        })
+        .catch((err) => console.error("Failed to fetch profile", err));
+
       // Create a game controller.
       const gameController = new GameController(camera, pawn);
       engine.registerSystem({
@@ -111,9 +120,7 @@ export const ThreeCanvas: React.FC<{
         towerClone.rotation.y -= Math.PI * 0.8;
         scene.add(towerClone);
         console.log(
-          `Tower placed at (${x.toFixed(
-            2
-          )}, ${y.toFixed(2)}, ${z.toFixed(2)}), scale: ${scale.toFixed(2)}`
+          `Tower placed at (${x.toFixed(2)}, ${y.toFixed(2)}, ${z.toFixed(2)}), scale: ${scale.toFixed(2)}`
         );
       } catch (error) {
         console.error("Error loading tower model:", error);
@@ -121,8 +128,9 @@ export const ThreeCanvas: React.FC<{
       // --- END TOWER ---
 
       // --- Spawn 2 NPC agents in front of the tower ---
-      const npc1 = new NpcAgent();
-      const npc2 = new NpcAgent();
+      // Create NPC agents with agent IDs, names, and initial balances.
+      const npc1 = new NpcAgent("agent-1", "Agent 1", 100);
+      const npc2 = new NpcAgent("agent-2", "Agent 2", 50);
       npc1.position.set(-17, 1, -10);
       npc2.position.set(-19, 1, -10);
       scene.add(npc1);
@@ -156,3 +164,5 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 });
+
+export default ThreeCanvas;
