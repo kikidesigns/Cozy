@@ -62,7 +62,13 @@ Cozy aims to create a delightful world where AI agents become cherished pets tha
 - **Authentication**: NOSTR protocol (nostr-tools)
 - **State Management**: Zustand
 - **Navigation**: Expo Router
-- **Storage**: AsyncStorage, NOSTR events
+- **Storage**: 
+  - AsyncStorage for local data
+  - NOSTR events for decentralized data
+  - Supabase (PostgreSQL) for:
+    - World persistence
+    - Chat history including LLM interactions
+    - Lightning wallet infrastructure integration
 
 ### Architecture
 - Cross-platform (iOS, Android, Web) through React Native
@@ -70,6 +76,7 @@ Cozy aims to create a delightful world where AI agents become cherished pets tha
 - Secure authentication via NOSTR
 - Real-time agent interactions
 - Persistent state management
+- Supabase backend for scalable data storage and real-time features
 
 ## Getting Started
 
@@ -112,6 +119,7 @@ Cozy is currently in active development. We welcome contributions that align wit
 - Employs Zustand for state management
 - Utilizes AsyncStorage for local data persistence
 - Implements BIP32/BIP39 for key management
+- Leverages Supabase for scalable backend services and real-time features
 
 ## Current Status
 
