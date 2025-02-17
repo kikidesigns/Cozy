@@ -39,7 +39,7 @@ export class AgentPawn extends Object3D {
     this.targetPosition = this.position.clone();
 
     // Initialize balance label (async—but fire-and-forget)
-    this.initBalanceLabel("₿ 0");
+    this.initBalanceLabel("0 sats");
   }
 
   private async initBalanceLabel(text: string) {

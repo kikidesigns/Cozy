@@ -54,7 +54,29 @@ const formatFiles = async () => {
     const engineFiles = getAllFiles(path.join(root, 'engine'));
 
     // Combine all files to process
-    const filesToCopy = [...specificFiles, ...engineFiles];
+    let filesToCopy = [...specificFiles, ...engineFiles];
+
+    // Check if --all flag is provided
+    if (process.argv.includes('--all')) {
+      const supabaseDir = path.join(root, 'supabase');
+      const utilsDir = path.join(root, 'utils');
+
+      if (fs.existsSync(supabaseDir)) {
+        const supabaseFiles = getAllFiles(supabaseDir);
+        filesToCopy.push(...supabaseFiles);
+        console.log('Including all files from supabase/');
+      } else {
+        console.log('Directory not found: supabase/');
+      }
+
+      if (fs.existsSync(utilsDir)) {
+        const utilsFiles = getAllFiles(utilsDir);
+        filesToCopy.push(...utilsFiles);
+        console.log('Including all files from utils/');
+      } else {
+        console.log('Directory not found: utils/');
+      }
+    }
 
     for (const filePath of filesToCopy) {
       const fullPath = path.join(root, filePath);

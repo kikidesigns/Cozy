@@ -49,7 +49,7 @@ export class NpcAgent extends Object3D {
     this.targetPosition = this.position.clone();
 
     // Initialize the balance label.
-    this.initBalanceLabel(`₿ ${initialBalance}`);
+    this.initBalanceLabel(`${initialBalance} sats`);
   }
 
   private async initBalanceLabel(text: string) {
