@@ -1,7 +1,7 @@
 import {
     BoxGeometry, Camera, Mesh, MeshStandardMaterial, Object3D, Vector3
 } from "three"
-import { getProfile, getProfileById } from "../../utils/auth" // ensure this path is correct
+import { getProfile, getProfileById } from "../../utils/auth"
 import { supabase } from "../../utils/supabase"
 import { useChatStore } from "../chat/ChatStore"
 import { NpcInteractionMenu } from "../ui/NpcInteractionMenu"
@@ -121,6 +121,35 @@ export class NpcAgent extends Object3D {
     return this.currentBalance;
   }
 
+  public async setKnowledgeBase(knowledge: string): Promise<void> {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ knowledge_base: knowledge })
+        .eq('id', this.agentId);
+      
+      if (error) throw error;
+    } catch (error) {
+      console.error("Failed to update knowledge base:", error);
+    }
+  }
+
+  public async getKnowledgeBase(): Promise<string | null> {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('knowledge_base')
+        .eq('id', this.agentId)
+        .single();
+      
+      if (error) throw error;
+      return data?.knowledge_base || null;
+    } catch (error) {
+      console.error("Failed to get knowledge base:", error);
+      return null;
+    }
+  }
+
   private chooseNewTarget() {
     const minX = -25, maxX = -15;
     const minZ = -20, maxZ = -10;
@@ -184,26 +213,52 @@ export class NpcAgent extends Object3D {
     }
   }
 
-  private triggerPrivateChat(): void {
+  private async triggerPrivateChat(): Promise<void> {
     const chatStore = useChatStore.getState();
     chatStore.setCurrentChannel("Private");
-    const npcGreetings = [
-      "Hello, traveler!",
-      "Nice to meet you!",
-      "Welcome to our town!",
-      "Good to see you!",
-      "Hey there! Need anything?",
-    ];
-    const randomGreeting = npcGreetings[Math.floor(Math.random() * npcGreetings.length)];
-    chatStore.sendChatMessage("Private", randomGreeting, this.agentName);
+
+    try {
+      const currentUserProfile = await getProfile();
+      const response = await fetch("/functions/chat-llm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          npc_id: this.agentId,
+          message: "INITIAL_GREETING",
+          context: {
+            npc_name: this.agentName,
+            npc_balance: this.currentBalance,
+            player_id: currentUserProfile.id
+          }
+        })
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        chatStore.sendChatMessage("Private", result.message, this.agentName);
+      } else {
+        throw new Error(result.error);
+      }
+    } catch (error) {
+      console.error("LLM chat failed:", error);
+      // Fallback to basic greeting
+      const npcGreetings = [
+        "Hello, traveler!",
+        "Nice to meet you!",
+        "Welcome to our town!",
+        "Good to see you!",
+        "Hey there! Need anything?",
+      ];
+      const randomGreeting = npcGreetings[Math.floor(Math.random() * npcGreetings.length)];
+      chatStore.sendChatMessage("Private", randomGreeting, this.agentName);
+    }
   }
 
-  // Trigger the trade action: send 1 sat from the current user to this NPC.
   private async triggerTradeChat(): Promise<void> {
     try {
       const currentUserProfile = await getProfile();
       const currentUserId = currentUserProfile.id;
-      const response = await fetch("https://<YOUR-SUPABASE-PROJECT>.functions.supabase.co/send-sats", {
+      const response = await fetch("/functions/send-sats", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -216,10 +271,8 @@ export class NpcAgent extends Object3D {
       if (result.success) {
         const chatStore = useChatStore.getState();
         chatStore.sendChatMessage("Private", "Sent 1 sat!", this.agentName);
-        // If new balances are returned, update this NPC's label.
         if (result.transferData) {
           this.updateBalance(result.transferData.recipient_balance);
-          // Optionally, update the player's pawn label as well.
         }
       } else {
         console.error("Trade failed:", result.error);
