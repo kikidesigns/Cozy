@@ -1,7 +1,10 @@
+// engine/rendering/ThreeCanvas.tsx
 import { GLView } from "expo-gl"
 import React, { useCallback } from "react"
 import { StyleSheet, View } from "react-native"
 import { AmbientLight, Color, PerspectiveCamera, Scene, Vector3 } from "three"
+import { getNpcConfigs } from "../../src/config/npcAgents"
+import { getProfile } from "../../utils/auth" // Used to update the player's balance
 import { AssetManager } from "../assets/AssetManager"
 import { AgentPawn } from "../entities/AgentPawn"
 import { BuildingsAndSidewalks } from "../entities/BuildingsAndSidewalks"
@@ -65,6 +68,13 @@ export const ThreeCanvas: React.FC<{
       scene.add(pawn);
       console.log("AgentPawn added");
 
+      // Update the player pawn's balance after fetching profile info.
+      getProfile()
+        .then((profile) => {
+          pawn.updateBalance(profile.bitcoin_balance);
+        })
+        .catch((err) => console.error("Failed to fetch profile", err));
+
       // Create a game controller.
       const gameController = new GameController(camera, pawn);
       engine.registerSystem({
@@ -111,29 +121,31 @@ export const ThreeCanvas: React.FC<{
         towerClone.rotation.y -= Math.PI * 0.8;
         scene.add(towerClone);
         console.log(
-          `Tower placed at (${x.toFixed(
-            2
-          )}, ${y.toFixed(2)}, ${z.toFixed(2)}), scale: ${scale.toFixed(2)}`
+          `Tower placed at (${x.toFixed(2)}, ${y.toFixed(2)}, ${z.toFixed(2)}), scale: ${scale.toFixed(2)}`
         );
       } catch (error) {
         console.error("Error loading tower model:", error);
       }
       // --- END TOWER ---
 
-      // --- Spawn 2 NPC agents in front of the tower ---
-      const npc1 = new NpcAgent();
-      const npc2 = new NpcAgent();
-      npc1.position.set(-17, 1, -10);
-      npc2.position.set(-19, 1, -10);
-      scene.add(npc1);
-      scene.add(npc2);
+      // Create NPC agents from configuration
+      const npcConfigs = getNpcConfigs();
+      const npcs = npcConfigs.map((config, index) => {
+        const npc = new NpcAgent(config.id, config.name);
+        npc.position.set(-17 - (index * 2), 1, -10); // Spread them out
+        scene.add(npc);
+        return npc;
+      });
+
       console.log("NPC agents added to the scene.");
 
+      // Register the update system for NPCs
+      const updateNpcs = (delta: number) => {
+        npcs.forEach(npc => npc.update(delta));
+      };
+
       engine.registerSystem({
-        update: (delta: number) => {
-          npc1.update(delta);
-          npc2.update(delta);
-        },
+        update: updateNpcs,
       });
       console.log("NPC agents update system registered.");
     },
@@ -156,3 +168,5 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 });
+
+export default ThreeCanvas;
