@@ -1,7 +1,8 @@
 import {
     BoxGeometry, Camera, Mesh, MeshStandardMaterial, Object3D, Vector3
 } from "three"
-import { getProfile } from "../../utils/auth" // ensure this path is correct
+import { getProfile, getProfileById } from "../../utils/auth" // ensure this path is correct
+import { supabase } from "../../utils/supabase"
 import { useChatStore } from "../chat/ChatStore"
 import { NpcInteractionMenu } from "../ui/NpcInteractionMenu"
 import { createTextMesh } from "../utils/createTextMesh"
@@ -16,20 +17,23 @@ export class NpcAgent extends Object3D {
   public isInteracting: boolean = false;
   public interactionMenu: NpcInteractionMenu | null = null;
   private currentCamera: Camera | null = null;
-  private agentName: string;
+  public agentName: string;
   public agentId: string; // must match the Supabase profile id for this agent
 
   // Balance label properties.
-  public balanceLabel: THREE.Mesh | null = null;
+  public balanceLabel?: Object3D;
   public currentBalance: number = 0;
 
-  constructor(agentId: string, agentName: string = "Agent 1", initialBalance: number = 0) {
+  constructor(agentId: string, agentName: string) {
     super();
     this.agentId = agentId;
     this.agentName = agentName;
-    this.currentBalance = initialBalance;
     this.userData.isNpc = true;
+    this.baseHeight = 3;
+    this.position.y = this.baseHeight;
+    this.targetPosition = this.position.clone();
 
+    // Initialize the mesh
     const geometry = new BoxGeometry(1, 1, 1);
     this.material = new MeshStandardMaterial({
       color: 0x800080,
@@ -44,49 +48,77 @@ export class NpcAgent extends Object3D {
     this.mesh.name = "NpcMesh";
     this.add(this.mesh);
 
-    this.baseHeight = 3;
-    this.position.y = this.baseHeight;
-    this.targetPosition = this.position.clone();
+    // Fetch and set the actual balance for this NPC
+    this.initBalance();
+  }
 
-    // Initialize the balance label.
-    this.initBalanceLabel(`${initialBalance} sats`);
+  private async initBalance() {
+    try {
+      console.log(`Initializing balance for NPC ${this.agentName} (${this.agentId})`);
+
+      // Try to fetch existing profile
+      const { data: existingProfile, error: fetchError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', this.agentId)
+        .single();
+
+      if (fetchError) {
+        console.log(`No existing profile found for ${this.agentName}, creating new one...`);
+
+        // Create new profile
+        const { data: newProfile, error: insertError } = await supabase
+          .from('profiles')
+          .insert({
+            id: this.agentId,
+            username: this.agentName,
+            bitcoin_balance: 500,
+            is_npc: true,
+            updated_at: new Date().toISOString()
+          })
+          .select()
+          .single();
+
+        if (insertError) {
+          console.error(`Failed to create profile for ${this.agentName}:`, insertError);
+          throw insertError;
+        }
+
+        console.log(`Created new profile for ${this.agentName}:`, newProfile);
+        this.currentBalance = newProfile.bitcoin_balance;
+        await this.initBalanceLabel(`${newProfile.bitcoin_balance} sats`);
+      } else {
+        console.log(`Found existing profile for ${this.agentName}:`, existingProfile);
+        this.currentBalance = existingProfile.bitcoin_balance;
+        await this.initBalanceLabel(`${existingProfile.bitcoin_balance} sats`);
+      }
+    } catch (error) {
+      console.error(`Failed to initialize balance for ${this.agentName}:`, error);
+      this.currentBalance = 0;
+      await this.initBalanceLabel("0 sats");
+    }
   }
 
   private async initBalanceLabel(text: string) {
-    try {
-      const label = await createTextMesh(text, {
-        size: 0.5,
-        height: 0.05,
-        color: 0xff00ff,
-      });
-      label.position.set(0, 3.5, 0);
-      this.balanceLabel = label;
-      this.add(label);
-    } catch (e) {
-      console.error("Error creating NPC balance label:", e);
+    if (this.balanceLabel) {
+      this.remove(this.balanceLabel);
     }
+    this.balanceLabel = await createTextMesh(text, {
+      size: 0.3,
+      height: 0.05,
+      color: 0xFFFFFF,
+      position: new Vector3(0, this.baseHeight + 1, 0)
+    });
+    this.add(this.balanceLabel);
   }
 
   public async updateBalance(newBalance: number) {
     this.currentBalance = newBalance;
-    if (this.balanceLabel) {
-      this.remove(this.balanceLabel);
-      this.balanceLabel.geometry.dispose();
-      (this.balanceLabel.material as THREE.Material).dispose();
-      this.balanceLabel = null;
-    }
-    try {
-      const label = await createTextMesh(`Balance: ${newBalance} sats`, {
-        size: 0.5,
-        height: 0.05,
-        color: 0xff00ff,
-      });
-      label.position.set(0, 3.5, 0);
-      this.balanceLabel = label;
-      this.add(label);
-    } catch (e) {
-      console.error("Error updating NPC balance label:", e);
-    }
+    await this.initBalanceLabel(`${newBalance} sats`);
+  }
+
+  public getBalance(): number {
+    return this.currentBalance;
   }
 
   private chooseNewTarget() {
@@ -184,7 +216,7 @@ export class NpcAgent extends Object3D {
       if (result.success) {
         const chatStore = useChatStore.getState();
         chatStore.sendChatMessage("Private", "Sent 1 sat!", this.agentName);
-        // If new balances are returned, update this NPC’s label.
+        // If new balances are returned, update this NPC's label.
         if (result.transferData) {
           this.updateBalance(result.transferData.recipient_balance);
           // Optionally, update the player's pawn label as well.

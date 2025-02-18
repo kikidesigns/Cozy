@@ -3,7 +3,8 @@ import { GLView } from "expo-gl"
 import React, { useCallback } from "react"
 import { StyleSheet, View } from "react-native"
 import { AmbientLight, Color, PerspectiveCamera, Scene, Vector3 } from "three"
-import { getProfile } from "../../utils/auth" // Used to update the player’s balance
+import { getNpcConfigs } from "../../src/config/npcAgents"
+import { getProfile } from "../../utils/auth" // Used to update the player's balance
 import { AssetManager } from "../assets/AssetManager"
 import { AgentPawn } from "../entities/AgentPawn"
 import { BuildingsAndSidewalks } from "../entities/BuildingsAndSidewalks"
@@ -67,7 +68,7 @@ export const ThreeCanvas: React.FC<{
       scene.add(pawn);
       console.log("AgentPawn added");
 
-      // Update the player pawn’s balance after fetching profile info.
+      // Update the player pawn's balance after fetching profile info.
       getProfile()
         .then((profile) => {
           pawn.updateBalance(profile.bitcoin_balance);
@@ -127,21 +128,24 @@ export const ThreeCanvas: React.FC<{
       }
       // --- END TOWER ---
 
-      // --- Spawn 2 NPC agents in front of the tower ---
-      // Create NPC agents with agent IDs, names, and initial balances.
-      const npc1 = new NpcAgent("agent-1", "Agent 1", 100);
-      const npc2 = new NpcAgent("agent-2", "Agent 2", 50);
-      npc1.position.set(-17, 1, -10);
-      npc2.position.set(-19, 1, -10);
-      scene.add(npc1);
-      scene.add(npc2);
+      // Create NPC agents from configuration
+      const npcConfigs = getNpcConfigs();
+      const npcs = npcConfigs.map((config, index) => {
+        const npc = new NpcAgent(config.id, config.name);
+        npc.position.set(-17 - (index * 2), 1, -10); // Spread them out
+        scene.add(npc);
+        return npc;
+      });
+
       console.log("NPC agents added to the scene.");
 
+      // Register the update system for NPCs
+      const updateNpcs = (delta: number) => {
+        npcs.forEach(npc => npc.update(delta));
+      };
+
       engine.registerSystem({
-        update: (delta: number) => {
-          npc1.update(delta);
-          npc2.update(delta);
-        },
+        update: updateNpcs,
       });
       console.log("NPC agents update system registered.");
     },
