@@ -1,13 +1,15 @@
 // engine/chat/ChatStore.ts
 import { create } from "zustand"
+import { supabase } from "../../utils/supabase"
 
 export interface ChatMessage {
-  id: number;
+  id: string;
   channel: "World" | "Party" | "Guild" | "Private";
   sender: string; // Sender name (Player or NPC)
   text: string;
   timestamp: string;
   recipient?: string;
+  is_llm_response?: boolean;
 }
 
 export interface TradeMessage {
@@ -85,98 +87,171 @@ interface ChatState {
   sendChatMessage: (
     channel: "World" | "Party" | "Guild" | "Private",
     text: string,
-    sender?: string, // FIXED: Sender name (now properly used)
+    sender?: string,
     recipient?: string
-  ) => void;
+  ) => Promise<void>;
   setCurrentChannel: (channel: "World" | "Party" | "Guild" | "Private") => void;
   startTradeConversation: (npcName?: string) => void;
   chooseTradeOption: (optionIndex: number) => void;
   endTradeConversation: () => void;
   setChatActive: (active: boolean) => void;
+  loadMessages: () => Promise<void>;
+  subscribeToMessages: () => void;
+  unsubscribeFromMessages: () => void;
 }
 
-export const useChatStore = create<ChatState>((set, get) => ({
-  messages: [],
-  currentChannel: "World",
-  isChatActive: false,
-  isTradeActive: false,
-  tradeMessages: [],
-  tradeStep: null,
+export const useChatStore = create<ChatState>((set, get) => {
+  let messageSubscription: any = null;
 
-  sendChatMessage: (channel, text, sender = "Player", recipient?) => {
-    const newMessage: ChatMessage = {
-      id: Date.now(),
-      channel,
-      sender, // FIXED: Sender is now properly assigned
-      text,
-      timestamp: formatTime(new Date()),
-      ...(recipient ? { recipient } : {}),
-    };
-    set((state) => ({ messages: [...state.messages, newMessage] }));
-  },
+  return {
+    messages: [],
+    currentChannel: "World",
+    isChatActive: false,
+    isTradeActive: false,
+    tradeMessages: [],
+    tradeStep: null,
 
-  setCurrentChannel: (channel) => set({ currentChannel: channel }),
-
-  startTradeConversation: (npcName = "Trader") => {
-    const initialStep: TradeStepKey = "start";
-    const initialNpcText = tradeDialogueScript[initialStep].npcText;
-    const now = formatTime(new Date());
-    set({
-      isTradeActive: true,
-      tradeStep: initialStep,
-      tradeMessages: initialNpcText
-        ? [
-          {
-            id: Date.now(),
-            senderType: "NPC",
-            text: `${npcName}: ${initialNpcText}`,
-            timestamp: now,
-          },
-        ]
-        : [],
-    });
-  },
-
-  chooseTradeOption: (optionIndex: number) => {
-    const state = get();
-    const currentStep = state.tradeStep;
-    if (!currentStep) return;
-    const stepData = tradeDialogueScript[currentStep];
-    const options = stepData.options;
-    const chosenOption = options[optionIndex];
-    if (!chosenOption) return;
-
-    const now = formatTime(new Date());
-    const playerMessage: TradeMessage = {
-      id: Date.now(),
-      senderType: "Player",
-      text: `You: ${chosenOption.text}`,
-      timestamp: now,
-    };
-
-    let newTradeMessages = [...state.tradeMessages, playerMessage];
-    const nextStep = chosenOption.next;
-    const nextStepData = tradeDialogueScript[nextStep];
-
-    if (nextStepData && nextStepData.npcText) {
-      const npcMsg: TradeMessage = {
-        id: Date.now() + 1,
-        senderType: "NPC",
-        text: `NPC: ${nextStepData.npcText}`,
-        timestamp: formatTime(new Date()),
+    sendChatMessage: async (channel, text, sender = "Player", recipient?) => {
+      const timestamp = formatTime(new Date());
+      const newMessage: Partial<ChatMessage> = {
+        channel,
+        sender,
+        text,
+        timestamp,
+        ...(recipient ? { recipient } : {}),
       };
-      newTradeMessages.push(npcMsg);
-    }
 
-    set({ tradeMessages: newTradeMessages, tradeStep: nextStep });
-    if (nextStep === "finish") {
-      set({ isTradeActive: false, tradeStep: null });
-    }
-  },
+      try {
+        // Insert into Supabase
+        const { data, error } = await supabase
+          .from("chat_messages")
+          .insert([newMessage])
+          .select()
+          .single();
 
-  endTradeConversation: () => {
-    set({ isTradeActive: false, tradeStep: null, tradeMessages: [] });
-  },
+        if (error) throw error;
 
-  setChatActive: (active) => set({ isChatActive: active }),
-}));
+        // Update local state
+        set((state) => ({
+          messages: [...state.messages, data as ChatMessage],
+        }));
+      } catch (error) {
+        console.error("Failed to send message:", error);
+        // Still update local state for better UX
+        set((state) => ({
+          messages: [...state.messages, { id: Date.now().toString(), ...newMessage } as ChatMessage],
+        }));
+      }
+    },
+
+    loadMessages: async () => {
+      try {
+        const { data, error } = await supabase
+          .from("chat_messages")
+          .select("*")
+          .order("created_at", { ascending: false })
+          .limit(50);
+
+        if (error) throw error;
+
+        set({ messages: data as ChatMessage[] });
+      } catch (error) {
+        console.error("Failed to load messages:", error);
+      }
+    },
+
+    subscribeToMessages: () => {
+      if (messageSubscription) return;
+
+      messageSubscription = supabase
+        .channel("chat_messages")
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "chat_messages",
+          },
+          (payload) => {
+            const newMessage = payload.new as ChatMessage;
+            set((state) => ({
+              messages: [...state.messages, newMessage],
+            }));
+          }
+        )
+        .subscribe();
+    },
+
+    unsubscribeFromMessages: () => {
+      if (messageSubscription) {
+        supabase.removeChannel(messageSubscription);
+        messageSubscription = null;
+      }
+    },
+
+    setCurrentChannel: (channel) => set({ currentChannel: channel }),
+
+    startTradeConversation: (npcName = "Trader") => {
+      const initialStep: TradeStepKey = "start";
+      const initialNpcText = tradeDialogueScript[initialStep].npcText;
+      const now = formatTime(new Date());
+      set({
+        isTradeActive: true,
+        tradeStep: initialStep,
+        tradeMessages: initialNpcText
+          ? [
+              {
+                id: Date.now(),
+                senderType: "NPC",
+                text: `${npcName}: ${initialNpcText}`,
+                timestamp: now,
+              },
+            ]
+          : [],
+      });
+    },
+
+    chooseTradeOption: (optionIndex: number) => {
+      const state = get();
+      const currentStep = state.tradeStep;
+      if (!currentStep) return;
+      const stepData = tradeDialogueScript[currentStep];
+      const options = stepData.options;
+      const chosenOption = options[optionIndex];
+      if (!chosenOption) return;
+
+      const now = formatTime(new Date());
+      const playerMessage: TradeMessage = {
+        id: Date.now(),
+        senderType: "Player",
+        text: `You: ${chosenOption.text}`,
+        timestamp: now,
+      };
+
+      let newTradeMessages = [...state.tradeMessages, playerMessage];
+      const nextStep = chosenOption.next;
+      const nextStepData = tradeDialogueScript[nextStep];
+
+      if (nextStepData && nextStepData.npcText) {
+        const npcMsg: TradeMessage = {
+          id: Date.now() + 1,
+          senderType: "NPC",
+          text: `NPC: ${nextStepData.npcText}`,
+          timestamp: formatTime(new Date()),
+        };
+        newTradeMessages.push(npcMsg);
+      }
+
+      set({ tradeMessages: newTradeMessages, tradeStep: nextStep });
+      if (nextStep === "finish") {
+        set({ isTradeActive: false, tradeStep: null });
+      }
+    },
+
+    endTradeConversation: () => {
+      set({ isTradeActive: false, tradeStep: null, tradeMessages: [] });
+    },
+
+    setChatActive: (active) => set({ isChatActive: active }),
+  };
+});
