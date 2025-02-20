@@ -1,3 +1,7 @@
+-- Add knowledge_base to profiles
+alter table public.profiles
+add column if not exists knowledge_base text;
+
 -- Create chat_messages table
 create table public.chat_messages (
   id uuid default uuid_generate_v4() primary key,
