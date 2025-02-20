@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.21.0"
-import { Configuration, OpenAIApi } from "https://esm.sh/openai@3.2.1"
+import { Configuration, OpenAIApi } from "https://esm.sh/openai@3.3.0"
 
 const openai = new OpenAIApi(new Configuration({
   apiKey: Deno.env.get("OPENAI_API_KEY")
@@ -11,13 +11,23 @@ const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+interface RequestBody {
+  npc_id: string;
+  message: string;
+  context: {
+    npc_name: string;
+    npc_balance: number;
+    player_id: string;
+  };
+}
+
 serve(async (req) => {
   if (req.method !== "POST") {
     return new Response("Method not allowed", { status: 405 });
   }
 
   try {
-    const { npc_id, message, context } = await req.json();
+    const { npc_id, message, context } = await req.json() as RequestBody;
     
     if (!npc_id || !message || !context) {
       return new Response(
@@ -44,7 +54,7 @@ serve(async (req) => {
     const { data: history, error: historyError } = await supabase
       .from("chat_messages")
       .select("*")
-      .or(`sender_id.eq.${npc_id},recipient_id.eq.${npc_id}`)
+      .or(`sender_id.eq.${npc_id},recipient_id.eq.${context.player_id}`)
       .order("created_at", { ascending: true })
       .limit(10);
 
@@ -55,25 +65,53 @@ serve(async (req) => {
       );
     }
 
-    // Format prompt with context and history
-    const prompt = `You are ${context.npc_name}, an NPC in a cozy game world.
+    // Convert history to ChatGPT messages format
+    const chatHistory = history?.map(msg => ({
+      role: msg.sender_id === npc_id ? "assistant" : "user",
+      content: msg.text
+    })) || [];
+
+    // System message with context
+    const systemMessage = {
+      role: "system",
+      content: `You are ${context.npc_name}, an NPC in a cozy game world.
 Your balance is ${context.npc_balance} sats.
-${npcProfile?.knowledge_base ? `\nYour knowledge and background:\n${npcProfile.knowledge_base}\n` : ""}
-Recent conversation:
-${history?.map(msg => `${msg.sender_id === npc_id ? "NPC" : "Player"}: ${msg.text}`).join("\n") || ""}
+${npcProfile?.knowledge_base ? `\nYour knowledge and background:\n${npcProfile.knowledge_base}` : ""}
 
-Player: ${message}
+You should:
+1. Respond naturally and conversationally
+2. Keep responses concise (1-2 sentences usually)
+3. Stay in character as ${context.npc_name}
+4. When discussing trades, be specific about sat amounts
+5. Be helpful and friendly, but also show personality
 
-Respond naturally as ${context.npc_name}:`;
+Remember you are an NPC in a game world, not an AI assistant.`
+    };
 
-    const completion = await openai.createCompletion({
-      model: "gpt-3.5-turbo",
-      prompt,
+    // Current user message
+    const userMessage = {
+      role: "user",
+      content: message
+    };
+
+    const completion = await openai.createChatCompletion({
+      model: "gpt-4-turbo-preview",
+      messages: [
+        systemMessage,
+        ...chatHistory,
+        userMessage
+      ],
       max_tokens: 150,
       temperature: 0.7,
+      presence_penalty: 0.6, // Encourage varied responses
+      frequency_penalty: 0.3, // Reduce repetition
     });
 
-    const llmResponse = completion.data.choices[0].text.trim();
+    const llmResponse = completion.data.choices[0]?.message?.content?.trim();
+
+    if (!llmResponse) {
+      throw new Error("No response from LLM");
+    }
 
     // Store the LLM response in chat_messages
     const { error: insertError } = await supabase
@@ -85,8 +123,9 @@ Respond naturally as ${context.npc_name}:`;
         text: llmResponse,
         is_llm_response: true,
         metadata: {
-          prompt,
-          completion: completion.data
+          prompt: systemMessage.content,
+          usage: completion.data.usage,
+          model: completion.data.model
         }
       });
 
@@ -97,7 +136,8 @@ Respond naturally as ${context.npc_name}:`;
     return new Response(
       JSON.stringify({
         success: true,
-        message: llmResponse
+        message: llmResponse,
+        usage: completion.data.usage
       }),
       { headers: { "Content-Type": "application/json" } }
     );
