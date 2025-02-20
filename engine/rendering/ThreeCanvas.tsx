@@ -4,7 +4,7 @@ import React, { useCallback } from "react"
 import { StyleSheet, View } from "react-native"
 import { AmbientLight, Color, PerspectiveCamera, Scene, Vector3 } from "three"
 import { getNpcConfigs } from "../../src/config/npcAgents"
-import { getProfile } from "../../utils/auth" // Used to update the player's balance
+import { getProfile, getProfileById } from "../../utils/auth" // Used to update the player's balance
 import { AssetManager } from "../assets/AssetManager"
 import { AgentPawn } from "../entities/AgentPawn"
 import { BuildingsAndSidewalks } from "../entities/BuildingsAndSidewalks"
@@ -15,6 +15,9 @@ import { Lighting } from "../entities/Lighting"
 import { NpcAgent } from "../entities/NpcAgent" // NEW: NPC agent
 import { TouchInputSystem } from "../input/TouchInputSystem"
 import { RendererSystem } from "./RendererSystem"
+
+// Demo player ID for development
+const DEMO_PLAYER_ID = "00000000-0000-0000-0000-000000000000";
 
 export const ThreeCanvas: React.FC<{
   style?: any;
@@ -68,12 +71,16 @@ export const ThreeCanvas: React.FC<{
       scene.add(pawn);
       console.log("AgentPawn added");
 
-      // Update the player pawn's balance after fetching profile info.
-      getProfile()
-        .then((profile) => {
-          pawn.updateBalance(profile.bitcoin_balance);
-        })
-        .catch((err) => console.error("Failed to fetch profile", err));
+      // Update the player pawn's balance using demo profile
+      try {
+        const profile = await getProfileById(DEMO_PLAYER_ID);
+        console.log("Got demo profile:", profile);
+        pawn.updateBalance(profile.bitcoin_balance);
+      } catch (err) {
+        console.error("Failed to fetch demo profile", err);
+        // Set a default balance
+        pawn.updateBalance(1000000);
+      }
 
       // Create a game controller.
       const gameController = new GameController(camera, pawn);
