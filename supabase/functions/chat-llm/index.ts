@@ -1,16 +1,13 @@
+// deno-lint-ignore-file
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.21.0"
-import { Groq } from "https://esm.sh/@groq/groq-sdk@0.3.2"
 
-// Initialize Groq client
-const groq = new Groq({
-  apiKey: Deno.env.get("GROQ_API_KEY")
-});
-
-// Initialize Supabase client
-const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+interface ChatMessage {
+  sender_id: string;
+  recipient_id: string;
+  text: string;
+  created_at: string;
+}
 
 interface RequestBody {
   npc_id: string;
@@ -22,14 +19,61 @@ interface RequestBody {
   };
 }
 
-serve(async (req) => {
+// Types for Groq API
+interface GroqChatMessage {
+  role: "system" | "user" | "assistant";
+  content: string;
+}
+
+interface GroqResponse {
+  choices: Array<{
+    message?: {
+      content?: string;
+    };
+  }>;
+  usage?: any;
+  model?: string;
+}
+
+// Initialize Groq client
+async function generateGroqResponse(messages: GroqChatMessage[]): Promise<GroqResponse> {
+  const response = await fetch("https://api.groq.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${Deno.env.get("GROQ_API_KEY")}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      messages,
+      model: "mixtral-8x7b-32768",
+      temperature: 0.7,
+      max_tokens: 150,
+      top_p: 1,
+      presence_penalty: 0.6,
+      frequency_penalty: 0.3,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Groq API error: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
+// Initialize Supabase client
+const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+serve(async (req: Request) => {
   if (req.method !== "POST") {
     return new Response("Method not allowed", { status: 405 });
   }
 
   try {
     const { npc_id, message, context } = await req.json() as RequestBody;
-    
+
     if (!npc_id || !message || !context) {
       return new Response(
         JSON.stringify({ error: "Missing required parameters" }),
@@ -67,7 +111,7 @@ serve(async (req) => {
     }
 
     // Format conversation history
-    const conversationHistory = history
+    const conversationHistory = (history as ChatMessage[])
       ?.map(msg => `${msg.sender_id === npc_id ? "NPC" : "Player"}: ${msg.text}`)
       .join("\n") || "";
 
@@ -89,24 +133,14 @@ Remember you are an NPC in a game world, not an AI assistant.`
     };
 
     // Generate response using Groq
-    const completion = await groq.chat.completions.create({
-      messages: [
-        systemMessage,
-        // Add conversation history as separate messages
-        ...history?.map(msg => ({
-          role: msg.sender_id === npc_id ? "assistant" : "user",
-          content: msg.text
-        })) || [],
-        // Current message
-        { role: "user", content: message }
-      ],
-      model: "mixtral-8x7b-32768",
-      temperature: 0.7,
-      max_tokens: 150,
-      top_p: 1,
-      presence_penalty: 0.6,
-      frequency_penalty: 0.3,
-    });
+    const completion = await generateGroqResponse([
+      systemMessage,
+      ...(history as ChatMessage[])?.map(msg => ({
+        role: msg.sender_id === npc_id ? "assistant" : "user" as const,
+        content: msg.text
+      })) || [],
+      { role: "user", content: message }
+    ]);
 
     const llmResponse = completion.choices[0]?.message?.content?.trim();
 
@@ -141,10 +175,13 @@ Remember you are an NPC in a game world, not an AI assistant.`
       }),
       { headers: { "Content-Type": "application/json" } }
     );
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("LLM chat error:", error);
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
+      JSON.stringify({
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error"
+      }),
       { status: 500 }
     );
   }
