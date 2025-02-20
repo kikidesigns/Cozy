@@ -1,10 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.21.0"
-import { Configuration, OpenAIApi } from "https://esm.sh/openai@3.3.0"
+import { GroqChat } from 'npm:@groq/groq-sdk'
 
-const openai = new OpenAIApi(new Configuration({
-  apiKey: Deno.env.get("OPENAI_API_KEY")
-}));
+// Initialize Groq client
+const groq = new GroqChat({
+  apiKey: Deno.env.get("GROQ_API_KEY")
+});
 
 // Initialize Supabase client
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -65,7 +66,7 @@ serve(async (req) => {
       );
     }
 
-    // Convert history to ChatGPT messages format
+    // Convert history to chat messages format
     const chatHistory = history?.map(msg => ({
       role: msg.sender_id === npc_id ? "assistant" : "user",
       content: msg.text
@@ -94,20 +95,21 @@ Remember you are an NPC in a game world, not an AI assistant.`
       content: message
     };
 
-    const completion = await openai.createChatCompletion({
-      model: "gpt-4-turbo-preview",
+    const completion = await groq.chat.completions.create({
+      model: "mixtral-8x7b-32768",  // Mixtral model for better performance
       messages: [
         systemMessage,
         ...chatHistory,
         userMessage
       ],
-      max_tokens: 150,
       temperature: 0.7,
-      presence_penalty: 0.6, // Encourage varied responses
-      frequency_penalty: 0.3, // Reduce repetition
+      max_tokens: 150,
+      top_p: 1,
+      presence_penalty: 0.6,
+      frequency_penalty: 0.3,
     });
 
-    const llmResponse = completion.data.choices[0]?.message?.content?.trim();
+    const llmResponse = completion.choices[0]?.message?.content?.trim();
 
     if (!llmResponse) {
       throw new Error("No response from LLM");
@@ -124,8 +126,8 @@ Remember you are an NPC in a game world, not an AI assistant.`
         is_llm_response: true,
         metadata: {
           prompt: systemMessage.content,
-          usage: completion.data.usage,
-          model: completion.data.model
+          usage: completion.usage,
+          model: completion.model
         }
       });
 
@@ -137,7 +139,7 @@ Remember you are an NPC in a game world, not an AI assistant.`
       JSON.stringify({
         success: true,
         message: llmResponse,
-        usage: completion.data.usage
+        usage: completion.usage
       }),
       { headers: { "Content-Type": "application/json" } }
     );
