@@ -1,11 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.21.0"
-import { GroqChat } from 'npm:@groq/groq-sdk'
-
-// Initialize Groq client
-const groq = new GroqChat({
-  apiKey: Deno.env.get("GROQ_API_KEY")
-});
+import { groq } from '@ai-sdk/groq'
+import { generateText } from 'ai'
 
 // Initialize Supabase client
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
@@ -66,18 +62,22 @@ serve(async (req) => {
       );
     }
 
-    // Convert history to chat messages format
-    const chatHistory = history?.map(msg => ({
-      role: msg.sender_id === npc_id ? "assistant" : "user",
-      content: msg.text
-    })) || [];
+    // Format conversation history
+    const conversationHistory = history
+      ?.map(msg => `${msg.sender_id === npc_id ? "NPC" : "Player"}: ${msg.text}`)
+      .join("\n") || "";
 
-    // System message with context
-    const systemMessage = {
-      role: "system",
-      content: `You are ${context.npc_name}, an NPC in a cozy game world.
+    // Generate response using Vercel AI SDK
+    const { text: llmResponse, usage } = await generateText({
+      model: groq('mixtral-8x7b-32768'),
+      prompt: `You are ${context.npc_name}, an NPC in a cozy game world.
 Your balance is ${context.npc_balance} sats.
 ${npcProfile?.knowledge_base ? `\nYour knowledge and background:\n${npcProfile.knowledge_base}` : ""}
+
+Recent conversation:
+${conversationHistory}
+
+Player: ${message}
 
 You should:
 1. Respond naturally and conversationally
@@ -86,30 +86,12 @@ You should:
 4. When discussing trades, be specific about sat amounts
 5. Be helpful and friendly, but also show personality
 
-Remember you are an NPC in a game world, not an AI assistant.`
-    };
+Remember you are an NPC in a game world, not an AI assistant.
 
-    // Current user message
-    const userMessage = {
-      role: "user",
-      content: message
-    };
-
-    const completion = await groq.chat.completions.create({
-      model: "mixtral-8x7b-32768",  // Mixtral model for better performance
-      messages: [
-        systemMessage,
-        ...chatHistory,
-        userMessage
-      ],
+Respond as ${context.npc_name}:`,
       temperature: 0.7,
-      max_tokens: 150,
-      top_p: 1,
-      presence_penalty: 0.6,
-      frequency_penalty: 0.3,
+      maxTokens: 150,
     });
-
-    const llmResponse = completion.choices[0]?.message?.content?.trim();
 
     if (!llmResponse) {
       throw new Error("No response from LLM");
@@ -125,9 +107,8 @@ Remember you are an NPC in a game world, not an AI assistant.`
         text: llmResponse,
         is_llm_response: true,
         metadata: {
-          prompt: systemMessage.content,
-          usage: completion.usage,
-          model: completion.model
+          usage,
+          model: 'mixtral-8x7b-32768'
         }
       });
 
@@ -139,7 +120,7 @@ Remember you are an NPC in a game world, not an AI assistant.`
       JSON.stringify({
         success: true,
         message: llmResponse,
-        usage: completion.usage
+        usage
       }),
       { headers: { "Content-Type": "application/json" } }
     );
