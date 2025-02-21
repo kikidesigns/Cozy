@@ -19,21 +19,55 @@ const ChatOverlay: React.FC = () => {
     setCurrentChannel,
     chooseTradeOption,
     setChatActive,
+    loadMessages,
+    subscribeToMessages,
+    unsubscribeFromMessages,
   } = useChatStore();
 
   const flatListRef = useRef<FlatList<any>>(null);
   const [draftMessage, setDraftMessage] = useState<string>("");
   const insets = useSafeAreaInsets(); // SafeArea insets
 
+  // Setup message subscription and load initial messages
   useEffect(() => {
+    console.log("ChatOverlay: Loading initial messages and setting up subscription");
+    loadMessages();
+    subscribeToMessages();
+    return () => {
+      console.log("ChatOverlay: Cleaning up subscription");
+      unsubscribeFromMessages();
+    };
+  }, []);
+
+  // Scroll to bottom when messages change
+  useEffect(() => {
+    console.log("ChatOverlay: Messages updated, scrolling to bottom");
     if (flatListRef.current) {
-      flatListRef.current.scrollToEnd({ animated: true });
+      setTimeout(() => {
+        flatListRef.current?.scrollToEnd({ animated: true });
+      }, 100); // Small delay to ensure render is complete
     }
-  }, [messages.length, tradeMessages.length]);
+  }, [messages]);
 
   const onSendPress = () => {
     if (draftMessage.trim() !== "") {
-      sendChatMessage(currentChannel, draftMessage.trim());
+      console.log("ChatOverlay: Sending message in channel:", currentChannel);
+
+      // For World channel, just send the message
+      if (currentChannel === "World") {
+        sendChatMessage("World", draftMessage.trim());
+      }
+      // For Private channel, try to get recipient
+      else if (currentChannel === "Private") {
+        const lastMessage = [...messages].reverse().find(msg => msg.channel === "Private");
+        if (lastMessage) {
+          const recipientId = lastMessage.sender === "Player" ? lastMessage.recipient : lastMessage.sender;
+          console.log("ChatOverlay: Sending private message to recipient:", recipientId);
+          sendChatMessage("Private", draftMessage.trim(), "Player", recipientId);
+        } else {
+          console.error("ChatOverlay: No recipient found for private message");
+        }
+      }
       setDraftMessage("");
     }
   };
@@ -60,38 +94,46 @@ const ChatOverlay: React.FC = () => {
   );
 
   // Normal Chat Messages (World, Private)
-  const renderNormalChat = () => (
-    <View style={chatStyles.chatContentWrapper}>
-      <FlatList
-        ref={flatListRef}
-        data={messages.filter((msg) => msg.channel === currentChannel)}
-        keyExtractor={(item) => item.id.toString()}
-        renderItem={({ item }) => (
-          <View
-            style={[
-              chatStyles.message,
-              item.sender === "Player"
-                ? chatStyles.userMessage
-                : chatStyles.agentMessage,
-            ]}
-          >
-            <Text
-              style={[
-                chatStyles.messageText,
-                item.sender === "Player"
-                  ? chatStyles.userMessageText
-                  : chatStyles.agentMessageText,
-              ]}
-            >
-              [{item.timestamp}] {item.sender}: {item.text}
-            </Text>
-          </View>
-        )}
-        style={chatStyles.messageScroll}
-        contentContainerStyle={chatStyles.messageScrollContent}
-      />
-    </View>
-  );
+  const renderNormalChat = () => {
+    const filteredMessages = messages.filter((msg) => msg.channel === currentChannel);
+    console.log("ChatOverlay: Rendering messages for channel", currentChannel, filteredMessages);
+
+    return (
+      <View style={chatStyles.chatContentWrapper}>
+        <FlatList
+          ref={flatListRef}
+          data={filteredMessages}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={({ item }) => {
+            console.log("ChatOverlay: Rendering message item:", item);
+            return (
+              <View
+                style={[
+                  chatStyles.message,
+                  item.sender === "Player"
+                    ? chatStyles.userMessage
+                    : chatStyles.agentMessage,
+                ]}
+              >
+                <Text
+                  style={[
+                    chatStyles.messageText,
+                    item.sender === "Player"
+                      ? chatStyles.userMessageText
+                      : chatStyles.agentMessageText,
+                  ]}
+                >
+                  [{item.timestamp}] {item.sender}: {item.text}
+                </Text>
+              </View>
+            );
+          }}
+          style={chatStyles.messageScroll}
+          contentContainerStyle={chatStyles.messageScrollContent}
+        />
+      </View>
+    );
+  };
 
   return (
     <View style={chatStyles.chatWrapper}>

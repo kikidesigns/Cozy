@@ -103,7 +103,7 @@ serve(async (req: Request) => {
     // Get NPC profile including knowledge base
     const { data: npcProfile, error: profileError } = await supabase
       .from("profiles")
-      .select("knowledge_base")
+      .select("knowledge_base, username")
       .eq("id", npc_id)
       .single();
 
@@ -134,19 +134,19 @@ serve(async (req: Request) => {
       ?.map(msg => `${msg.sender_id === npc_id ? "NPC" : "Player"}: ${msg.text}`)
       .join("\n") || "";
 
-    // System message with context
+    // System message with context and knowledge base
     const systemMessage = {
       role: "system",
-      content: `You are ${context.npc_name}, an NPC in a cozy game world.
-Your balance is ${context.npc_balance} sats.
-${npcProfile?.knowledge_base ? `\nYour knowledge and background:\n${npcProfile.knowledge_base}` : ""}
+      content: `You are an agent named ${npcProfile?.username || context.npc_name} in the 3D environment. You will respond to player's questions using the following knowledge:
 
-You should:
-1. Respond naturally and conversationally
-2. Keep responses concise (1-2 sentences usually)
-3. Stay in character as ${context.npc_name}
-4. When discussing trades, be specific about sat amounts
-5. Be helpful and friendly, but also show personality
+${npcProfile?.knowledge_base || "No specific knowledge provided."}
+
+Additional context:
+- Your balance is ${context.npc_balance} sats
+- Keep responses concise (1-2 sentences usually)
+- Stay in character
+- When discussing trades, be specific about sat amounts
+- Be helpful and friendly, but also show personality
 
 Remember you are an NPC in a game world, not an AI assistant.`
     };

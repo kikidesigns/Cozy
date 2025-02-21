@@ -243,81 +243,43 @@ export class NpcAgent extends THREE.Object3D {
     chatStore.setCurrentChannel("Private");
 
     try {
-      // First try to send a simple greeting without LLM
-      const { error: insertError } = await supabase
-        .from("chat_messages")
-        .insert({
-          channel: "Private",
-          sender_id: this.agentId,
-          recipient_id: playerId,
-          text: `Hello traveler! I am ${this.agentName}.`,
-          is_llm_response: false
-        });
-
-      if (insertError) {
-        console.error("Failed to send initial greeting:", insertError);
-        throw insertError;
-      }
-
-      // Then try the LLM response
+      // Get LLM response for initial greeting
+      console.log("NpcAgent: Getting LLM response for initial greeting...");
       const response = await this.callLlmChat("INITIAL_GREETING", playerId);
-      const { error: llmInsertError } = await supabase
+      console.log("NpcAgent: Got LLM response:", response);
+
+      const { data: insertData, error: llmInsertError } = await supabase
         .from("chat_messages")
         .insert({
           channel: "Private",
-          sender_id: this.agentId,
+          sender_id: this.agentId, // Now using the correct UUID
           recipient_id: playerId,
           text: response,
           is_llm_response: true
-        });
+        })
+        .select("*");
 
       if (llmInsertError) {
-        console.error("Failed to send LLM response:", llmInsertError);
+        console.error("NpcAgent: Failed to send LLM response:", llmInsertError);
+        throw llmInsertError;
       }
-    } catch (error) {
-      console.error("Failed to trigger private chat:", error);
-      // Don't use chatStore.sendChatMessage as it might not handle the DB correctly
-      const { error: fallbackError } = await supabase
-        .from("chat_messages")
-        .insert({
-          channel: "Private",
-          sender_id: this.agentId,
-          recipient_id: playerId,
-          text: "Hello traveler! (Sorry, I'm having trouble with my advanced responses right now)",
-          is_llm_response: false
-        });
 
-      if (fallbackError) {
-        console.error("Failed to send fallback message:", fallbackError);
-      }
+      console.log("NpcAgent: Successfully inserted message:", insertData);
+    } catch (error) {
+      console.error("NpcAgent: Failed to trigger private chat:", error);
+      // Don't send any fallback message - if LLM fails, just fail silently
     }
   }
 
   public async respondToChat(message: string, playerId: string): Promise<void> {
     try {
-      // First send a simple acknowledgment
-      const { error: ackError } = await supabase
-        .from("chat_messages")
-        .insert({
-          channel: "Private",
-          sender_id: this.agentId,
-          recipient_id: playerId,
-          text: "...",
-          is_llm_response: false
-        });
-
-      if (ackError) {
-        console.error("Failed to send acknowledgment:", ackError);
-        throw ackError;
-      }
-
       // Then try the LLM response
       const response = await this.callLlmChat(message, playerId);
       const { error: llmInsertError } = await supabase
         .from("chat_messages")
         .insert({
           channel: "Private",
-          sender_id: this.agentId,
+          sender_id: this.agentId, // Now using the correct UUID
           recipient_id: playerId,
           text: response,
           is_llm_response: true
@@ -329,20 +291,7 @@ export class NpcAgent extends THREE.Object3D {
       }
     } catch (error) {
       console.error("Failed to respond to chat:", error);
-      // Send a fallback response
-      const { error: fallbackError } = await supabase
-        .from("chat_messages")
-        .insert({
-          channel: "Private",
-          sender_id: this.agentId,
-          recipient_id: playerId,
-          text: "I'm sorry, I'm having trouble formulating a response right now.",
-          is_llm_response: false
-        });
-
-      if (fallbackError) {
-        console.error("Failed to send fallback message:", fallbackError);
-      }
+      // Just fail silently - no fallback messages
     }
   }
 
