@@ -95,7 +95,7 @@ export async function getProfileById(id: string) {
           id,
           username: `NPC_${id.slice(0, 8)}`,
           is_npc: true,
-          bitcoin_balance: 1000000, // Default 1M sats for NPCs
+          bitcoin_balance: 1000, // Default 1000 sats for NPCs
           updated_at: new Date().toISOString(),
         })
         .select()
@@ -149,12 +149,12 @@ export async function checkSupabaseConnection() {
       .from("profiles")
       .select("count")
       .limit(1);
-    
+
     if (error) {
       console.error("Supabase connection test failed:", error);
       return false;
     }
-    
+
     console.log("Supabase connection test succeeded:", data);
     return true;
   } catch (error) {
