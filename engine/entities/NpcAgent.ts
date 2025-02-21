@@ -62,8 +62,8 @@ export class NpcAgent extends THREE.Object3D {
         height: 0.05,
         color: 0xffffff, // White text
       });
-      // Position the label above the NPC
-      this.usernameLabel.position.set(0, 2.5, 0);
+      // Position the label higher above the NPC
+      this.usernameLabel.position.set(0, 3.5, 0); // Moved up from 2.5 to 3.5
       // Make sure label doesn't inherit parent's rotation
       this.usernameLabel.matrixAutoUpdate = true;
       this.add(this.usernameLabel);
@@ -74,8 +74,8 @@ export class NpcAgent extends THREE.Object3D {
         height: 0.05,
         color: 0xffff00, // Yellow text like player balance
       });
-      // Position the balance label below the username
-      this.balanceLabel.position.set(0, 2.2, 0);
+      // Position the balance label below the username but still above head
+      this.balanceLabel.position.set(0, 3.2, 0); // Moved up from 2.2 to 3.2
       // Make sure label doesn't inherit parent's rotation
       this.balanceLabel.matrixAutoUpdate = true;
       this.add(this.balanceLabel);
