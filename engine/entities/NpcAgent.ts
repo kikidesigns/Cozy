@@ -2,7 +2,9 @@ import * as THREE from "three"
 import { supabase } from "../../utils/supabase"
 // engine/entities/NpcAgent.ts
 import { useChatStore } from "../chat/ChatStore"
+import { GameController } from "../entities/GameController"
 import { NpcInteractionMenu } from "../ui/NpcInteractionMenu"
+import { createTextMesh } from "../utils/createTextMesh"
 
 export class NpcAgent extends THREE.Object3D {
   private agentId: string;
@@ -11,6 +13,8 @@ export class NpcAgent extends THREE.Object3D {
   private chatStore: typeof useChatStore;
   private interactionMenu: NpcInteractionMenu | null = null;
   private mesh: THREE.Mesh;
+  private usernameLabel: THREE.Object3D | null = null;
+  private balanceLabel: THREE.Object3D | null = null;
 
   // Movement properties
   private targetPosition: THREE.Vector3;
@@ -45,6 +49,39 @@ export class NpcAgent extends THREE.Object3D {
     if (shouldPatrol) {
       this.initializePatrolPath();
     }
+
+    // Initialize username label
+    this.initUsernameLabel();
+  }
+
+  private async initUsernameLabel() {
+    try {
+      // Create username label
+      this.usernameLabel = await createTextMesh(this.agentName, {
+        size: 0.3,
+        height: 0.05,
+        color: 0xffffff, // White text
+      });
+      // Position the label above the NPC
+      this.usernameLabel.position.set(0, 2.5, 0);
+      // Make sure label doesn't inherit parent's rotation
+      this.usernameLabel.matrixAutoUpdate = true;
+      this.add(this.usernameLabel);
+
+      // Create balance label
+      this.balanceLabel = await createTextMesh(`${this.currentBalance} sats`, {
+        size: 0.25, // Slightly smaller than username
+        height: 0.05,
+        color: 0xffff00, // Yellow text like player balance
+      });
+      // Position the balance label below the username
+      this.balanceLabel.position.set(0, 2.2, 0);
+      // Make sure label doesn't inherit parent's rotation
+      this.balanceLabel.matrixAutoUpdate = true;
+      this.add(this.balanceLabel);
+    } catch (e) {
+      console.error("Error creating labels:", e);
+    }
   }
 
   private initializePatrolPath() {
@@ -60,11 +97,11 @@ export class NpcAgent extends THREE.Object3D {
     this.targetPosition.copy(this.patrolPoints[0]);
   }
 
-  public async startInteraction(camera: THREE.Camera): Promise<void> {
+  public async startInteraction(camera: THREE.Camera, playerId: string): Promise<void> {
     if (!this.interactionMenu) {
       this.interactionMenu = await NpcInteractionMenu.createAsync();
       this.interactionMenu.position.set(0, 2.5, 0); // Above the NPC
-      this.interactionMenu.onChat = () => this.triggerPrivateChat("DEMO_PLAYER_ID");
+      this.interactionMenu.onChat = () => this.triggerPrivateChat(playerId);
       this.add(this.interactionMenu);
     }
 
@@ -73,11 +110,25 @@ export class NpcAgent extends THREE.Object3D {
   }
 
   public update(delta: number): void {
-    // Update interaction menu
-    if (this.interactionMenu) {
-      const camera = this.parent?.parent?.getObjectByName("camera") as THREE.Camera;
-      if (camera) {
-        this.interactionMenu.lookAt(camera.position);
+    // Get the camera from the game controller
+    const scene = this.parent as THREE.Scene;
+    if (!scene) return;
+
+    const gameController = scene.children.find(
+      child => child instanceof GameController
+    ) as GameController;
+
+    if (gameController?.camera) {
+      if (this.interactionMenu) {
+        this.interactionMenu.lookAt(gameController.camera.position);
+      }
+      if (this.usernameLabel) {
+        // Make label face camera directly using quaternion
+        this.usernameLabel.quaternion.copy(gameController.camera.quaternion);
+      }
+      if (this.balanceLabel) {
+        // Make label face camera directly using quaternion
+        this.balanceLabel.quaternion.copy(gameController.camera.quaternion);
       }
     }
 
@@ -144,12 +195,8 @@ export class NpcAgent extends THREE.Object3D {
 
     while (retryCount < maxRetries) {
       try {
-        const response = await fetch("/functions/chat-llm", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
+        const { data, error } = await supabase.functions.invoke("chat-llm", {
+          body: {
             npc_id: this.agentId,
             message,
             context: {
@@ -157,19 +204,18 @@ export class NpcAgent extends THREE.Object3D {
               npc_balance: this.currentBalance,
               player_id: playerId
             }
-          })
+          }
         });
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+        if (error) {
+          throw error;
         }
 
-        const result = await response.json();
-        if (!result.success) {
-          throw new Error(result.error || "Failed to get LLM response");
+        if (!data.success) {
+          throw new Error(data.error || "Failed to get LLM response");
         }
 
-        return result.message;
+        return data.message;
       } catch (error) {
         console.error(`LLM chat attempt ${retryCount + 1} failed:`, error);
         retryCount++;
@@ -306,6 +352,16 @@ export class NpcAgent extends THREE.Object3D {
 
   public updateBalance(amount: number): void {
     this.currentBalance = amount;
+    // Update the balance label text
+    if (this.balanceLabel) {
+      this.remove(this.balanceLabel);
+      const textMesh = this.balanceLabel.children[0] as THREE.Mesh;
+      textMesh.geometry.dispose();
+      if (textMesh.material instanceof THREE.Material) {
+        textMesh.material.dispose();
+      }
+      this.initUsernameLabel(); // This will recreate both labels
+    }
   }
 
   public getName(): string {

@@ -37,15 +37,21 @@ interface GroqResponse {
 
 // Initialize Groq client
 async function generateGroqResponse(messages: GroqChatMessage[]): Promise<GroqResponse> {
-  const response = await fetch("https://api.groq.com/v1/chat/completions", {
+  const apiKey = Deno.env.get("GROQ_API_KEY");
+  if (!apiKey) {
+    throw new Error("GROQ_API_KEY environment variable is not set");
+  }
+
+  console.log("Making request to Groq API...");
+  const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
     headers: {
-      "Authorization": `Bearer ${Deno.env.get("GROQ_API_KEY")}`,
+      "Authorization": `Bearer ${apiKey}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
       messages,
-      model: "mixtral-8x7b-32768",
+      model: "llama-3.3-70b-versatile",
       temperature: 0.7,
       max_tokens: 150,
       top_p: 1,
@@ -55,10 +61,23 @@ async function generateGroqResponse(messages: GroqChatMessage[]): Promise<GroqRe
   });
 
   if (!response.ok) {
-    throw new Error(`Groq API error: ${response.statusText}`);
+    const errorText = await response.text();
+    console.error("Groq API error details:", {
+      status: response.status,
+      statusText: response.statusText,
+      errorText,
+    });
+    throw new Error(`Groq API error: ${response.status} ${response.statusText} - ${errorText}`);
   }
 
-  return response.json();
+  const data = await response.json();
+  console.log("Groq API response:", {
+    status: response.status,
+    model: data.model,
+    usage: data.usage,
+  });
+
+  return data;
 }
 
 // Initialize Supabase client
