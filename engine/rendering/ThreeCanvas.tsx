@@ -4,7 +4,9 @@ import React, { useCallback } from "react"
 import { StyleSheet, View } from "react-native"
 import { AmbientLight, Color, PerspectiveCamera, Scene, Vector3 } from "three"
 import { getNpcConfigs } from "../../src/config/npcAgents"
-import { getProfile } from "../../utils/auth" // Used to update the player's balance
+import { Database } from "../../types/supabase"
+import { getProfile, getProfileById } from "../../utils/auth" // Used to update the player's balance
+import { supabase } from "../../utils/supabase"
 import { AssetManager } from "../assets/AssetManager"
 import { AgentPawn } from "../entities/AgentPawn"
 import { BuildingsAndSidewalks } from "../entities/BuildingsAndSidewalks"
@@ -15,6 +17,11 @@ import { Lighting } from "../entities/Lighting"
 import { NpcAgent } from "../entities/NpcAgent" // NEW: NPC agent
 import { TouchInputSystem } from "../input/TouchInputSystem"
 import { RendererSystem } from "./RendererSystem"
+
+// Demo player ID for development
+const DEMO_PLAYER_ID = "00000000-0000-0000-0000-000000000000";
+
+type Profile = Database['public']['Tables']['profiles']['Row']
 
 export const ThreeCanvas: React.FC<{
   style?: any;
@@ -68,12 +75,16 @@ export const ThreeCanvas: React.FC<{
       scene.add(pawn);
       console.log("AgentPawn added");
 
-      // Update the player pawn's balance after fetching profile info.
-      getProfile()
-        .then((profile) => {
-          pawn.updateBalance(profile.bitcoin_balance);
-        })
-        .catch((err) => console.error("Failed to fetch profile", err));
+      // Update the player pawn's balance using demo profile
+      try {
+        const profile = await getProfileById(DEMO_PLAYER_ID);
+        console.log("Got demo profile:", profile);
+        pawn.updateBalance(profile.bitcoin_balance);
+      } catch (err) {
+        console.error("Failed to fetch demo profile", err);
+        // Set a default balance
+        pawn.updateBalance(1000000);
+      }
 
       // Create a game controller.
       const gameController = new GameController(camera, pawn);
@@ -128,26 +139,80 @@ export const ThreeCanvas: React.FC<{
       }
       // --- END TOWER ---
 
-      // Create NPC agents from configuration
-      const npcConfigs = getNpcConfigs();
-      const npcs = npcConfigs.map((config, index) => {
-        const npc = new NpcAgent(config.id, config.name);
-        npc.position.set(-17 - (index * 2), 1, -10); // Spread them out
-        scene.add(npc);
-        return npc;
-      });
+      // Create NPC agents from database
+      try {
+        console.log("Fetching NPC profiles from database...");
+        const { data: npcProfiles, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("is_npc", true);
 
-      console.log("NPC agents added to the scene.");
+        if (error) {
+          console.error("Failed to fetch NPC profiles:", error);
+          return;
+        }
 
-      // Register the update system for NPCs
-      const updateNpcs = (delta: number) => {
-        npcs.forEach(npc => npc.update(delta));
-      };
+        console.log("Found NPC profiles:", npcProfiles);
+        const npcs = (npcProfiles as Profile[]).map((profile: Profile, index: number) => {
+          // Make the first NPC patrol
+          const shouldPatrol = index === 0;
+          const npc = new NpcAgent(
+            profile.id,
+            profile.username || `NPC_${index}`,
+            profile.bitcoin_balance || 0,
+            shouldPatrol
+          );
 
-      engine.registerSystem({
-        update: updateNpcs,
-      });
-      console.log("NPC agents update system registered.");
+          // Place NPCs in different locations based on index
+          let x: number, z: number;
+          switch (index) {
+            case 0: // Patrolling NPC starts at origin
+              x = 0;
+              z = 0;
+              break;
+            case 1: // Near the tower
+              x = -16;
+              z = -11;
+              break;
+            case 2: // By the entrance
+              x = -2;
+              z = 12;
+              break;
+            default: // Others in a circle
+              const radius = 15;
+              const angle = (2 * Math.PI * index) / npcProfiles.length;
+              x = radius * Math.cos(angle);
+              z = radius * Math.sin(angle);
+          }
+
+          npc.position.set(x, 1, z);
+
+          // Make NPCs face different directions
+          if (!shouldPatrol) { // Don't set rotation for patrolling NPC
+            const centerPoint = new Vector3(0, 0, 0);
+            const direction = new Vector3().subVectors(centerPoint, new Vector3(x, 0, z));
+            const angle = Math.atan2(direction.x, direction.z);
+            npc.rotation.y = angle;
+          }
+
+          scene.add(npc);
+          return npc;
+        });
+
+        console.log(`Added ${npcs.length} NPC agents to the scene.`);
+
+        // Register the update system for NPCs
+        const updateNpcs = (delta: number) => {
+          npcs.forEach(npc => npc.update(delta));
+        };
+
+        engine.registerSystem({
+          update: updateNpcs,
+        });
+        console.log("NPC agents update system registered.");
+      } catch (error) {
+        console.error("Error setting up NPCs:", error);
+      }
     },
     [engine, onTouchHandlers]
   );

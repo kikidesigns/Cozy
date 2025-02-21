@@ -81,6 +81,36 @@ const styles = StyleSheet.create({
     borderColor: Colors.white,
     marginLeft: 8,
   },
+  messageScroll: {
+    flex: 1,
+  },
+  messageScrollContent: {
+    padding: 10,
+  },
+  message: {
+    marginVertical: 4,
+    maxWidth: "80%",
+    padding: 8,
+    borderRadius: 12,
+  },
+  userMessage: {
+    alignSelf: "flex-end",
+    backgroundColor: Colors.orangeBrown,
+  },
+  agentMessage: {
+    alignSelf: "flex-start",
+    backgroundColor: Colors.warmBeige,
+  },
+  messageText: {
+    fontSize: 14,
+    lineHeight: 18,
+  },
+  userMessageText: {
+    color: Colors.white,
+  },
+  agentMessageText: {
+    color: Colors.darkOrangeBrown,
+  },
 });
 
 export default styles;

@@ -1,8 +1,11 @@
 import {
-  Dimensions, GestureResponderEvent, PanResponder, PanResponderGestureState
+    Dimensions, GestureResponderEvent, PanResponder, PanResponderGestureState
 } from "react-native"
 import * as THREE from "three"
 import { GameController } from "../entities/GameController"
+import { NpcAgent } from "../entities/NpcAgent"
+
+const DEMO_PLAYER_ID = "00000000-0000-0000-0000-000000000000";
 
 export class TouchInputSystem {
   public panResponder: any;
@@ -35,41 +38,46 @@ export class TouchInputSystem {
           const intersects = raycaster.intersectObjects(this.scene.children, true);
           console.log(`[TouchInput] Number of intersects: ${intersects.length}`);
           let interactionHandled = false;
+
           if (intersects.length > 0) {
             for (let intersect of intersects) {
               console.log(
-                `[TouchInput] Intersected object: ${intersect.object.name || "Unnamed"}, userData:`,
+                `[TouchInput] Intersected object: ${intersect.object.name}, userData:`,
                 intersect.object.userData
               );
-              if (intersect.object.userData.ignoreRaycast) {
-                console.log("[TouchInput] Skipping object due to ignoreRaycast flag.");
-                continue;
-              }
+
+              // Check if we hit a menu option first
               if (intersect.object.userData.interactionOption) {
-                const option = intersect.object.userData.interactionOption;
-                console.log(`[TouchInput] Hit menu option: ${option}`);
-                let parentMenu = intersect.object.parent;
-                if (parentMenu && parentMenu.userData.isNpcInteractionMenu) {
-                  if (option === "chat") {
+                console.log(
+                  `[TouchInput] Hit menu option: ${intersect.object.userData.interactionOption}`
+                );
+                // Find the root NPC by traversing up through all parents
+                let npc = intersect.object;
+                while (npc && !(npc instanceof NpcAgent) && npc.parent) {
+                  npc = npc.parent;
+                }
+
+                if (npc instanceof NpcAgent) {
+                  if (intersect.object.userData.interactionOption === "chat") {
                     console.log("[TouchInput] Triggering Chat action.");
-                    parentMenu.onChat && parentMenu.onChat();
-                  } else if (option === "trade") {
-                    console.log("[TouchInput] Triggering Trade action.");
-                    parentMenu.onTrade && parentMenu.onTrade();
+                    npc.triggerPrivateChat(DEMO_PLAYER_ID);
                   }
                   interactionHandled = true;
                   break;
+                } else {
+                  console.log("[TouchInput] Could not find parent NPC for menu option.");
                 }
               }
+
               if (intersect.object.userData.isNpc) {
                 console.log("[TouchInput] NPC object hit!");
                 let npc = intersect.object;
-                while (npc && typeof npc.startInteraction !== "function" && npc.parent) {
+                while (npc && !(npc instanceof NpcAgent) && npc.parent) {
                   npc = npc.parent;
                 }
-                if (npc && typeof npc.startInteraction === "function") {
+                if (npc instanceof NpcAgent) {
                   console.log("[TouchInput] Starting NPC interaction.");
-                  npc.startInteraction(this.gameController.camera);
+                  npc.startInteraction(this.gameController.camera, DEMO_PLAYER_ID);
                   interactionHandled = true;
                   break;
                 } else {

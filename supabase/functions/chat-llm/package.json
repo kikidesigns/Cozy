@@ -1,0 +1,7 @@
+{
+  "name": "chat-llm",
+  "version": "1.0.0",
+  "description": "LLM-powered chat function for Cozy NPCs",
+  "main": "index.ts",
+  "private": true
+}
